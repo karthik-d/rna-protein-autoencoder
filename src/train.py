@@ -5,7 +5,7 @@ from data.covid_dataset import CovidDataset
 
 
 print("GPU Access:", torch.cuda.is_available())
-epoch_model_path = "../data/epoch-{epoch}_mse-{mse}_loss-{loss}.pth"
+epoch_model_path = "../data/models/epoch-{epoch}_mse-{mse}_loss-{loss}.pth"
 
 # Model Initialization
 device = 'cpu'
@@ -20,7 +20,7 @@ mse_function = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(
 	model.parameters(),
     lr = 1e-3,
-    weight_decay = 1e-4
+    weight_decay = 1e-3
 )
 
 

@@ -24,8 +24,8 @@ class CovidDataset(Dataset):
 		print(rna_data.to_df())
 
 		## TODO: Divide based on split (stratified).
-		self.protein_split = protein_data.to_df().iloc[:10000, :]
-		self.rna_split = rna_data.to_df().iloc[:10000, :]
+		self.protein_split = protein_data.to_df().iloc[10000:20000, :]
+		self.rna_split = rna_data.to_df().iloc[10000:20000, :]
 
 
 	def __len__(self):
