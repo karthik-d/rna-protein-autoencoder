@@ -235,7 +235,6 @@ class Encoder(nn.Module):
     ):
         super().__init__()
 
-        self.distribution = distribution
         self.var_eps = var_eps
         self.encoder = FCLayers(
             n_in=n_input,
