@@ -9,7 +9,7 @@ class AutoEncoder(torch.nn.Module):
 		# layer followed by Relu activation function
 		# 3000 ==> 16
 		self.encoder = torch.nn.Sequential(
-			torch.nn.Linear(3000, 1024),
+			torch.nn.Linear(2000, 1024),
 			torch.nn.ReLU(),
 			torch.nn.Linear(1024, 256),
 			torch.nn.ReLU(),

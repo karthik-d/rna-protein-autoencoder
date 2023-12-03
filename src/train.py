@@ -1,15 +1,22 @@
 import torch
+import pathlib
 import time
+import os
 
 from nn.simple_autoencoder import AutoEncoder
 from data.covid_dataset import CovidDataset
 
 
 BATCH_SIZE = 32
+RUN_NAME = 1
 
 
 print("GPU Access:", torch.cuda.is_available())
-epoch_model_path = "../data/models/epoch-{epoch}_mse-{mse:.3f}_loss-{loss:.3f}.pth"
+epoch_model_path = "../data/models/run_"+f'{RUN_NAME}'+"/epoch-{epoch}_mse-{mse:.3f}_loss-{loss:.3f}.pth"
+pathlib.Path(os.path.dirname(epoch_model_path)).mkdir(
+	parents = True,
+	exist_ok = False
+)
 
 # Model Initialization
 device = 'cpu'
@@ -126,37 +133,11 @@ for epoch in range(num_epochs):
 	# CUDA cleanup
 	if torch.cuda.is_available():
 		torch.cuda.empty_cache()
-
-
-	# Save Checkpoint.  
-
-	# # Make checkpoint filename
-	# epoch_output_path = os.path.join(
-	# 	config.get('RUN_CHECKPOINT_PATH'),
-	# 	"epoch#{epoch_num}_val_acc#{valid_acc}.ckpt".format(
-	# 	epoch_num = epoch,
-	# 	valid_acc = str(round(valid_acc_stat.item(), 4)).replace('.', '-')
-	# 	)
-	# )
-
-	# # Save the model as a state dictionary.
-	# torch.save(
-	# 	obj={
-	# 		"model_state_dict": model.state_dict(),
-	# 		"optimizer_state_dict": optimizer.state_dict(),
-	# 		"scheduler_state_dict": scheduler.state_dict(),
-	# 		"epoch": epoch + 1
-	# 	},
-	# 	f=str(epoch_output_path)
-	# )
-
-	# print(f"Checkpoint saved as: {os.path.basename(epoch_output_path)}")
 		
 	# compute metrics.
 	print(f'Epoch [{epoch + 1}/{num_epochs}]')
 	print(f'[Training]. Loss: {train_loss_stat}, MSE: {train_mse_stat}.')
 	print(f'[Validation]. Loss: {valid_loss_stat}, MSE: {valid_mse_stat}.')
-	output.append((epoch, sum(loss_l)/len(loss_l), sum(mse_l)/len(mse_l)))
 	
 	# save current model --> replaced at each epoch.
 	print("saving model state ...")

@@ -28,7 +28,9 @@ class CovidDataset(Dataset):
 		print(rna_data.n_obs, rna_data.n_vars)
 
 		# split data, if not already done.
-		if not os.path.isfile(TRAIN_SAMPLES_PATH) or not os.path.isfile(TEST_SAMPLES_PATH):
+		if not os.path.isfile(TRAIN_SAMPLES_PATH
+						) or not os.path.isfile(TEST_SAMPLES_PATH
+							  ) or not os.path.isfile(VALID_SAMPLES_PATH):
 
 			print("Splitting data (stratified 80-20) ...")
 			splitter = StratifiedShuffleSplit(n_splits=1, test_size=0.2)
