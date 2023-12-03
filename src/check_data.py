@@ -8,9 +8,9 @@ CITE_DATA_PATH = os.path.join(DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_CITE
 RNA_DATA_PATH = os.path.join(DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_RNA.h5ad")
 
 
-cite_df = sc.read_h5ad(CITE_DATA_PATH)
-print(cite_df.n_obs, cite_df.n_vars)
-print(cite_df.obs)
+# cite_df = sc.read_h5ad(CITE_DATA_PATH)
+# print(cite_df.n_obs, cite_df.n_vars)
+# print(cite_df.obs)
 # print(cite_df.head())
 
 rna_df = sc.read_h5ad(RNA_DATA_PATH)

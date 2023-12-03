@@ -9,7 +9,7 @@ import numpy as np
 
 class CovidDataset(Dataset):
 
-	def __init__(self, version='two', split='train'):
+	def __init__(self, version='two', split='train', input_type='norm'):
 		
 		DATA_PATH = os.path.join("../data", f"version_{version}")
 		PROTEIN_DATA_PATH = os.path.join(DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_CITE.h5ad")

@@ -2,12 +2,12 @@ import torch
 
 class AutoEncoder(torch.nn.Module):
     
-	def __init__(self):
+	def __init__(self, n_latent_space):
 		super().__init__()
 			
 		# Building an linear encoder with Linear
 		# layer followed by Relu activation function
-		# 3000 ==> 16
+		# 3000 ==> n_latent_space
 		self.encoder = torch.nn.Sequential(
 			torch.nn.Linear(2000, 1024),
 			torch.nn.ReLU(),
@@ -17,14 +17,14 @@ class AutoEncoder(torch.nn.Module):
 			torch.nn.ReLU(),
 			torch.nn.Linear(128, 32),
 			torch.nn.ReLU(),
-			torch.nn.Linear(32, 16)
+			torch.nn.Linear(32, n_latent_space)
 		)
 			
 		# Building an linear decoder with Linear
 		# layer followed by Relu activation function
-		# 16 ==> 138
+		# n_latent_space ==> 138
 		self.decoder = torch.nn.Sequential(
-			torch.nn.Linear(16, 32),
+			torch.nn.Linear(n_latent_space, 32),
 			torch.nn.ReLU(),
 			torch.nn.Linear(32, 64),
 			torch.nn.ReLU(),
