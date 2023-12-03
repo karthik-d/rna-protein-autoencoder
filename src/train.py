@@ -8,8 +8,8 @@ print("GPU Access:", torch.cuda.is_available())
 epoch_model_path = "../data/models/epoch-{epoch}_mse-{mse}_loss-{loss}.pth"
 
 # Model Initialization
-# device = 'cpu'
-device = 'cuda:0'
+device = 'cpu'
+# device = 'cuda:0'
 model = AutoEncoder().to(device)
  
 # Validation using MSE Loss function
