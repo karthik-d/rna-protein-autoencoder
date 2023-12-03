@@ -48,12 +48,12 @@ class CovidDataset(Dataset):
 			test_rows = pd.read_csv(TEST_SAMPLES_PATH)['samples']
 
 		## TODO: Divide based on split (stratified).
-		self.protein_split = protein_data.to_df().iloc[10000:20000, :]
-		self.rna_split = rna_data.to_df().iloc[10000:20000, :]
+		self.protein_split = protein_data.to_df().iloc[:10000, :]
+		self.rna_split = rna_data.to_df().iloc[:10000, :]
 
-		reqd_rows = train_rows if split=='train' else test_rows
-		self.protein_split = protein_data.to_df().loc[reqd_rows]
-		self.rna_split = rna_data.to_df().loc[reqd_rows]
+		# reqd_rows = train_rows if split=='train' else test_rows
+		# self.protein_split = protein_data.to_df().loc[reqd_rows]
+		# self.rna_split = rna_data.to_df().loc[reqd_rows]
 
 
 	def __len__(self):

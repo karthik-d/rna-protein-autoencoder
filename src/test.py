@@ -35,6 +35,7 @@ data_loader = get_data_loader()
 
 loss_l = []
 mse_l = []
+corr_l = []
 with torch.no_grad():
 
 	for data in data_loader:
@@ -48,7 +49,14 @@ with torch.no_grad():
 		mse = mse_function(protein_recon, protein)
 		mse_l.append(mse)
 
+		corr = torch.corrcoef(torch.cat([protein_recon.flatten(), protein.flatten()]))
+		# print(type(protein_recon.flatten()))
+		corr_l.append(corr)
+
 # compute metrics.
 avg_mse = sum(mse_l)/len(mse_l)
-print(f'Avg. MSE:{avg_mse}')
+avg_corr = sum(corr_l)/len(corr_l)
+
+print(f'Avg. MSE :{avg_mse}')
+print(f'Avg. Corr:{avg_corr}')
     
