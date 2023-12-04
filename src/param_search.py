@@ -18,18 +18,32 @@ LATENT_SPACES = [ 8, 16, 24 ]
 # ---------------------------------
 
 
-print("GPU Access:", torch.cuda.is_available())
+
+### Model Configuration
+
+# init GPU
+
+FLAG = torch.cuda.is_available()
+device = torch.device("cuda:0" if FLAG else "cpu")
+print("GPU Access:", FLAG)
+print("DEVICE:", device)
+if FLAG:
+    print("DEVICE Name:", torch.cuda.get_device_name(0))
+
+
+# configure path
+
 run_path = "../data/models/{run_name}"
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
 training_summary_path = os.path.join(run_path, "training-summary.csv")
 
-device = 'cpu'
-# device = 'cuda:0'
  
 # Validation using MSE Loss function
+
 loss_function = torch.nn.CrossEntropyLoss()
 mse_function = torch.nn.MSELoss()
 
+# Load data 
 
 def get_data_loaders(batch_size, input_type):
 	
@@ -206,13 +220,19 @@ def train_job(
 	}}).to_csv(training_summary_path.format(run_name=run_name))
 
 
+
+
+# -------------- START Training ---------------
+
+
+
 train_loader, valid_loader = None, None
 for inp_type in INPUT_TYPES:
 
 	# load data. caching to reduce data loading calls.
 	train_loader, valid_loader = get_data_loaders(
-		batch_size=32,
-		input_type=inp_type
+		batch_size = 256, # change to 256 (totalVI), originally 32
+		input_type = inp_type
 	)
 
 	for lr, dr, n_latent_space in itertools.product(
