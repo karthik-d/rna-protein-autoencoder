@@ -8,6 +8,7 @@ See [LINK](https://www.dropbox.com/scl/fo/fs29ctkjojo3dd1ntagpa/h?rlkey=nebpsack
 ## Steps to run parameter search.
 
 - Set the parameters to be swept in the header lines of [param_search.py](./src/param_search.py).
+- Specify the data version in the calls to `CovidDataset` in function `get_data_loaders`.
 - Run the script: [param_search.py](./src/param_search.py).
 
 > [!Note]
