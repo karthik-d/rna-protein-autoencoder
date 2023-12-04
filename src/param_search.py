@@ -11,10 +11,10 @@ from utils.metrics import compute_colwise_correlations
 
 
 # PARAM SWEEP ---------------------
-LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
-DECAY_RATES = [ 1e-2, 1e-3 ]
+LEARNING_RATES = [ 1e-1, 1e-2]
+DECAY_RATES = [ 1e-2]
 INPUT_TYPES = ['norm', 'raw']
-LATENT_SPACES = [ 8, 16, 24 ]
+LATENT_SPACES = [ 8]
 # ---------------------------------
 
 
@@ -242,9 +242,12 @@ for inp_type in INPUT_TYPES:
 		normalization_method = 'minmax'     # can be: [None, 'minmax']
 	)
 
-	for lr, dr, n_latent_space in itertools.product(
+	param_grid = tuple(itertools.product(
 		LEARNING_RATES, DECAY_RATES, LATENT_SPACES
-	):
+	))
+	print(f"\nRunning param search on {len(param_grid)*2} combinations ...")
+	for lr, dr, n_latent_space in param_grid:
+
 		run_name = f"run_lr-{lr:.2e}_dr-{dr:.2e}_ls-{n_latent_space}_inp-{inp_type}"
 		train_job(
 			learning_rate = lr,

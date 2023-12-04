@@ -36,6 +36,11 @@ class CovidDataset(Dataset):
 		protein_data = sc.read_h5ad(self.PROTEIN_DATA_PATH)
 		print(protein_data.n_obs, protein_data.n_vars)
 
+		# get raw layer, if reqd.
+		if input_type == 'raw':
+			rna_data = rna_data.raw.to_adata()
+			protein_data = protein_data.raw.to_adata()
+
 		self.split_data(rna_data, protein_data)
 		self.preprocess_data()
 
