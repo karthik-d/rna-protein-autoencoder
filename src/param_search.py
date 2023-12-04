@@ -10,6 +10,14 @@ from data.covid_dataset import CovidDataset
 from utils.metrics import compute_colwise_correlations
 
 
+# PARAM SWEEP ---------------------
+LEARNING_RATES = [ 1e-1, 1e-2 ]
+DECAY_RATES = [ 1e-2]
+INPUT_TYPES = ['norm', 'raw']
+LATENT_SPACES = [ 8 ]
+# ---------------------------------
+
+
 print("GPU Access:", torch.cuda.is_available())
 run_path = "../data/models/{run_name}"
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
@@ -25,10 +33,10 @@ mse_function = torch.nn.MSELoss()
 
 def get_data_loaders(batch_size, input_type):
 	
-	# TODO: use `input_type` to determine the data input type -- lognorm and raw.
+	# TODO: use `input_type` to determine the data input type -- norm and raw.
 
-	train_dataset = CovidDataset(split='train')
-	valid_dataset = CovidDataset(split='valid')
+	train_dataset = CovidDataset(split='train', input_type=input_type)
+	valid_dataset = CovidDataset(split='valid', input_type=input_type)
 	# wrap dataset into dataloader.
 	return torch.utils.data.DataLoader(
 		train_dataset,
@@ -43,10 +51,11 @@ def get_data_loaders(batch_size, input_type):
 
 def train_job(
 	learning_rate,
-	input_type,
+	decay_rate,
 	latent_space,
 	run_name,
-	batch_size = 32,
+	train_loader,
+	valid_loader,
 	num_epochs = 100
 ):
 	
@@ -64,13 +73,7 @@ def train_job(
 	optimizer = torch.optim.Adam(
 		model.parameters(),
 		lr = learning_rate,
-		weight_decay = 1e-5
-	)
-
-	# load data.
-	train_loader, valid_loader = get_data_loaders(
-		batch_size=batch_size,
-		input_type=input_type
+		weight_decay = decay_rate
 	)
 
 	# init accumulators.
@@ -181,8 +184,6 @@ def train_job(
 		print(f"[Validation]. Loss: {valid_stats['loss'][-1]}, MSE: {valid_stats['mse'][-1]}, Corr: {np.mean(valid_stats['corr'][-1])}.")
 		
 		# save current model --> replaced at each epoch.
-		print(valid_stats['loss'][-1])
-		print(valid_stats['corr'][-1])
 		print("saving model state ...")
 		torch.save(
 			model.state_dict(), 
@@ -205,15 +206,25 @@ def train_job(
 	}}).to_csv(training_summary_path.format(run_name=run_name))
 
 
-train_job(
-	learning_rate = 1e-3,
-	input_type = 'norm',
-	latent_space = 16,
-	run_name = f"check",
-	batch_size = 32,
-	num_epochs = 2
-)
+train_loader, valid_loader = None, None
+for inp_type in INPUT_TYPES:
 
-	#f"run_lr-{learning_rate:.2e}_ls-{latent_space}_inp-{input_type}"
-    
+	# load data. caching to reduce data loading calls.
+	train_loader, valid_loader = get_data_loaders(
+		batch_size=32,
+		input_type=inp_type
+	)
 
+	for lr, dr, n_latent_space in itertools.product(
+		LEARNING_RATES, DECAY_RATES, LATENT_SPACES
+	):
+		run_name = f"run_lr-{lr:.2e}_dr-{dr:.2e}_ls-{n_latent_space}_inp-{inp_type}"
+		train_job(
+			learning_rate = lr,
+			decay_rate = dr,
+			latent_space = n_latent_space,
+			run_name = run_name,
+			train_loader = train_loader,
+			valid_loader = valid_loader,
+			num_epochs = 2
+		)
