@@ -13,7 +13,7 @@ from utils.metrics import compute_colwise_correlations
 print("GPU Access:", torch.cuda.is_available())
 run_path = "../data/models/{run_name}"
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
-epoch_stats_path = os.path.join(run_path, "stats.csv")
+training_summary_path = os.path.join(run_path, "training-summary.csv")
 
 device = 'cpu'
 # device = 'cuda:0'
@@ -23,8 +23,10 @@ loss_function = torch.nn.CrossEntropyLoss()
 mse_function = torch.nn.MSELoss()
 
 
-def get_data_loaders(batch_size):
+def get_data_loaders(batch_size, input_type):
 	
+	# TODO: use `input_type` to determine the data input type -- lognorm and raw.
+
 	train_dataset = CovidDataset(split='train')
 	valid_dataset = CovidDataset(split='valid')
 	# wrap dataset into dataloader.
@@ -49,7 +51,7 @@ def train_job(
 ):
 	
 	# lazy creation; create model saving path.
-	pathlib.Path(os.path.dirname(epoch_model_path)).mkdir(
+	pathlib.Path(run_path.format(run_name=run_name)).mkdir(
 		parents = True,
 		exist_ok = False
 	)
@@ -127,9 +129,9 @@ def train_job(
 		all_train_predictions = np.concatenate(train_predictions_batchwise)
 		
 		# Store training stats
-		valid_stats['loss'].append(train_running_loss / len(train_loader.dataset))
-		valid_stats['mse'].append(train_running_mse / len(train_loader.dataset))
-		valid_stats['corr'].append(compute_colwise_correlations(all_train_labels, all_train_predictions))
+		train_stats['loss'].append(train_running_loss / len(train_loader.dataset))
+		train_stats['mse'].append(train_running_mse / len(train_loader.dataset))
+		train_stats['corr'].append(np.mean(compute_colwise_correlations(all_train_labels, all_train_predictions)))
 
 		
 		# VALIDATION PHASE --------
@@ -171,28 +173,46 @@ def train_job(
 		# Store validation stats
 		valid_stats['loss'].append(valid_running_loss / len(valid_loader.dataset))
 		valid_stats['mse'].append(valid_running_mse / len(valid_loader.dataset))
-		valid_stats['corr'].append(compute_colwise_correlations(all_valid_labels, all_valid_predictions))
+		valid_stats['corr'].append(np.mean(compute_colwise_correlations(all_valid_labels, all_valid_predictions)))
 
 		# compute metrics.
 		print(f'Epoch [{epoch + 1}/{num_epochs}]')
-		print(f"[Training]. Loss: {train_stats['loss']}, MSE: {train_stats['mse']}, Corr: {np.mean(train_stats['corr'])}.")
-		print(f"[Validation]. Loss: {valid_stats['loss']}, MSE: {valid_stats['mse']}, Corr: {np.mean(valid_stats['corr'])}.")
+		print(f"[Training]. Loss: {train_stats['loss'][-1]}, MSE: {train_stats['mse'][-1]}, Corr: {np.mean(train_stats['corr'][-1])}.")
+		print(f"[Validation]. Loss: {valid_stats['loss'][-1]}, MSE: {valid_stats['mse'][-1]}, Corr: {np.mean(valid_stats['corr'][-1])}.")
 		
 		# save current model --> replaced at each epoch.
+		print(valid_stats['loss'][-1])
+		print(valid_stats['corr'][-1])
 		print("saving model state ...")
 		torch.save(
 			model.state_dict(), 
 			epoch_model_path.format(
 				epoch=epoch, 
-				loss=valid_stats['loss'], 
-				corr=valid_stats['corr'], 
+				loss=valid_stats['loss'][-1], 
+				corr=valid_stats['corr'][-1], 
 				run_name=run_name
 			)
 		)
 
 	# save training stats.
-		pd.read_csv()
+	stat_names = ['loss', 'mse', 'corr']
+	pd.DataFrame({**{
+		f'train_{stat}': train_stats[stat]
+		for stat in stat_names
+	}, **{
+		f'valid_{stat}': valid_stats[stat]
+		for stat in stat_names
+	}}).to_csv(training_summary_path.format(run_name=run_name))
 
+
+train_job(
+	learning_rate = 1e-3,
+	input_type = 'norm',
+	latent_space = 16,
+	run_name = f"check",
+	batch_size = 32,
+	num_epochs = 2
+)
 
 	#f"run_lr-{learning_rate:.2e}_ls-{latent_space}_inp-{input_type}"
     
