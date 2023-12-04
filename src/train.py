@@ -8,33 +8,43 @@ from data.covid_dataset import CovidDataset
 from utils.metrics import compute_colwise_correlations
 
 
-BATCH_SIZE = 32
+BATCH_SIZE = 32 # might be too SMALL, consider changing to 256
 RUN_NAME = 1
 
 
-print("GPU Access:", torch.cuda.is_available())
+### Model Initialization
+
+# init GPU
+
+FLAG = torch.cuda.is_available()
+device = torch.device("cuda:0" if FLAG else "cpu")
+print("GPU Access:", FLAG)
+print("DEVICE:", device)
+if FLAG:
+    print("DEVICE Name:", torch.cuda.get_device_name(0))
+
 epoch_model_path = "../data/models/run_"+f'{RUN_NAME}'+"/epoch-{epoch}_mse-{mse:.3f}_loss-{loss:.3f}.pth"
 pathlib.Path(os.path.dirname(epoch_model_path)).mkdir(
 	parents = True,
 	exist_ok = False
 )
 
-# Model Initialization
-device = 'cpu'
-# device = 'cuda:0'
 model = AutoEncoder().to(device)
  
 # Validation using MSE Loss function
+
 loss_function = torch.nn.CrossEntropyLoss()
 mse_function = torch.nn.MSELoss()
  
 # Using an Adam Optimizer.
+
 optimizer = torch.optim.Adam(
 	model.parameters(),
     lr = 1e-3,
     weight_decay = 1e-5
 )
 
+# Specify data loader
 
 def get_data_loaders():
 	
@@ -51,6 +61,7 @@ def get_data_loaders():
 		shuffle=False
 	)
 
+### TRAINING ### 
 
 num_epochs = 50
 output =[]
