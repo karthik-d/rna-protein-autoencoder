@@ -5,7 +5,7 @@ from data.covid_dataset import CovidDataset
 
 
 print("GPU Access:", torch.cuda.is_available())
-model_path = "../data/models_subset/epoch-20_mse-2.6286497116088867_loss-473.0475158691406.pth"
+model_path = "../data/models/run_1/epoch-2_mse-0.091_loss-519.304.pth"
 
 # Model Initialization
 device = 'cpu'

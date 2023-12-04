@@ -1,10 +1,11 @@
 import torch
 import pathlib
-import time
 import os
+import numpy as np
 
 from nn.simple_autoencoder import AutoEncoder
 from data.covid_dataset import CovidDataset
+from utils.metrics import compute_colwise_correlations
 
 
 BATCH_SIZE = 32
@@ -31,7 +32,7 @@ mse_function = torch.nn.MSELoss()
 optimizer = torch.optim.Adam(
 	model.parameters(),
     lr = 1e-3,
-    weight_decay = 1e-3
+    weight_decay = 1e-5
 )
 
 
@@ -56,7 +57,6 @@ output =[]
 train_loader, valid_loader = get_data_loaders()
 for epoch in range(num_epochs):
 	batch_size = BATCH_SIZE
-	epoch_start_time = time.time()
 
 	# TRAINING PHASE --------
 	model.train(mode=True)
@@ -64,6 +64,9 @@ for epoch in range(num_epochs):
 	# Init accumulators
 	train_running_loss = 0.0
 	train_running_mse = 0
+	train_running_pr = 0
+	train_labels_batchwise = []
+	train_predictions_batchwise = []
 
 	# Train over all training data -- batch-wise
 	num_train_steps = len(train_loader)
@@ -81,12 +84,15 @@ for epoch in range(num_epochs):
 				target=train_labels
 			)
 			train_mse = mse_function(train_outputs, train_labels)
+			train_pr = torch.corrcoef(torch.cat([train_outputs, train_labels]))
 			train_loss.backward()
 			optimizer.step()
 
 		# Update training stats
 		train_running_loss += train_loss.item() * train_inputs.size(0)
 		train_running_mse += train_mse.item()
+		train_labels_batchwise.append(train_labels.detach().numpy())
+		train_predictions_batchwise.append(train_outputs.detach().numpy())
 		print(f"Training Step: {idx} of {num_train_steps}", end='\r')
 
 
@@ -99,6 +105,9 @@ for epoch in range(num_epochs):
 	if torch.cuda.is_available():
 		torch.cuda.empty_cache()
 
+	all_train_labels = np.concatenate(train_labels_batchwise)
+	all_train_predictions = np.concatenate(train_predictions_batchwise)
+	train_corr_stat = compute_colwise_correlations(all_train_labels, all_train_predictions)
 
 	# VALIDATION PHASE --------
 	model.train(mode=False)
@@ -106,6 +115,8 @@ for epoch in range(num_epochs):
 	# Init accumulators
 	valid_running_loss = 0.0
 	valid_running_mse = 0
+	valid_labels_batchwise = []
+	valid_predictions_batchwise = []
 
 	# Feed forward over all the validation data.
 	for idx, (valid_inputs, valid_labels) in enumerate(valid_loader):
@@ -120,10 +131,13 @@ for epoch in range(num_epochs):
 				target=valid_labels
 			)
 			valid_mse = mse_function(valid_outputs, valid_labels)
+			valid_pr = torch.corrcoef(torch.cat([valid_outputs, valid_labels]))
 
 		# Update validation stats
 		valid_running_loss += valid_loss.item() * valid_inputs.size(0)
 		valid_running_mse += valid_mse.item()
+		valid_labels_batchwise.append(valid_labels.detach().numpy())
+		valid_predictions_batchwise.append(valid_outputs.detach().numpy())
 
 
 	# Store validation stats
@@ -134,10 +148,14 @@ for epoch in range(num_epochs):
 	if torch.cuda.is_available():
 		torch.cuda.empty_cache()
 		
+	all_valid_labels = np.concatenate(valid_labels_batchwise)
+	all_valid_predictions = np.concatenate(valid_predictions_batchwise)
+	valid_corr_stat = compute_colwise_correlations(all_valid_labels, all_valid_predictions)
+
 	# compute metrics.
 	print(f'Epoch [{epoch + 1}/{num_epochs}]')
-	print(f'[Training]. Loss: {train_loss_stat}, MSE: {train_mse_stat}.')
-	print(f'[Validation]. Loss: {valid_loss_stat}, MSE: {valid_mse_stat}.')
+	print(f'[Training]. Loss: {train_loss_stat}, MSE: {train_mse_stat}, Corr: {np.mean(train_corr_stat)}.')
+	print(f'[Validation]. Loss: {valid_loss_stat}, MSE: {valid_mse_stat}, Corr: {np.mean(valid_corr_stat)}.')
 	
 	# save current model --> replaced at each epoch.
 	print("saving model state ...")

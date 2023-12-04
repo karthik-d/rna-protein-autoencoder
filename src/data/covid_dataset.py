@@ -9,7 +9,7 @@ import numpy as np
 
 class CovidDataset(Dataset):
 
-	def __init__(self, version='two', split='train'):
+	def __init__(self, version='two', split='train', input_type='norm'):
 		
 		DATA_PATH = os.path.join("../data", f"version_{version}")
 		PROTEIN_DATA_PATH = os.path.join(DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_CITE.h5ad")
@@ -19,11 +19,13 @@ class CovidDataset(Dataset):
 		VALID_SAMPLES_PATH = os.path.join(DATA_PATH, "covid-flu_valid-samples.csv")
 		TEST_SAMPLES_PATH = os.path.join(DATA_PATH, "covid-flu_test-samples.csv")
 
-		print("Protein Data.")
+		self.input_type = input_type
+		
+		print("\nProtein Data.")
 		protein_data = sc.read_h5ad(PROTEIN_DATA_PATH)
 		print(protein_data.n_obs, protein_data.n_vars)
 
-		print("RNA Data.")
+		print("\nRNA Data.")
 		rna_data = sc.read_h5ad(RNA_DATA_PATH)
 		print(rna_data.n_obs, rna_data.n_vars)
 
@@ -67,6 +69,9 @@ class CovidDataset(Dataset):
 		self.protein_split = protein_data.to_df().loc[reqd_rows]
 		self.rna_split = rna_data.to_df().loc[reqd_rows]
 
+		self.protein_split = protein_data.to_df().iloc[:4000]
+		self.rna_split = rna_data.to_df().iloc[:4000]
+
 
 	def __len__(self):
 		return self.rna_split.shape[0]
@@ -80,3 +85,7 @@ class CovidDataset(Dataset):
 		y_data = np.array(self.protein_split.iloc[idx, :]).astype(np.float32)
 
 		return (x_data, y_data)
+	
+
+	def get_input_type(self):
+		return self.input_type
