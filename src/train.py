@@ -8,7 +8,7 @@ from data.covid_dataset import CovidDataset
 from utils.metrics import compute_colwise_correlations
 
 
-BATCH_SIZE = 256 # change to 256, originally 32
+BATCH_SIZE = 64 # change to 256, originally 32
 RUN_NAME = 1
 
 
@@ -29,7 +29,7 @@ pathlib.Path(os.path.dirname(epoch_model_path)).mkdir(
 	exist_ok = False
 )
 
-model = AutoEncoder().to(device)
+model = AutoEncoder(n_latent_space=16).to(device)
  
 # Validation using MSE Loss function
 
@@ -102,8 +102,8 @@ for epoch in range(num_epochs):
 		# Update training stats
 		train_running_loss += train_loss.item() * train_inputs.size(0)
 		train_running_mse += train_mse.item()
-		train_labels_batchwise.append(train_labels.detach().numpy())
-		train_predictions_batchwise.append(train_outputs.detach().numpy())
+		train_labels_batchwise.append(train_labels.cpu().detach().numpy())
+		train_predictions_batchwise.append(train_outputs.cpu().detach().numpy())
 		print(f"Training Step: {idx} of {num_train_steps}", end='\r')
 
 
@@ -147,8 +147,8 @@ for epoch in range(num_epochs):
 		# Update validation stats
 		valid_running_loss += valid_loss.item() * valid_inputs.size(0)
 		valid_running_mse += valid_mse.item()
-		valid_labels_batchwise.append(valid_labels.detach().numpy())
-		valid_predictions_batchwise.append(valid_outputs.detach().numpy())
+		valid_labels_batchwise.append(valid_labels.cpu().detach().numpy())
+		valid_predictions_batchwise.append(valid_outputs.cpu().detach().numpy())
 
 
 	# Store validation stats

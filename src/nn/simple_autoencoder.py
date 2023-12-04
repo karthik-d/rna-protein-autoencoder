@@ -28,8 +28,8 @@ class AutoEncoder(torch.nn.Module):
 			torch.nn.ReLU(),
 			torch.nn.Linear(32, 64),
 			torch.nn.ReLU(),
-			torch.nn.Linear(64, 138) #,
-			# torch.nn.Sigmoid()
+			torch.nn.Linear(64, 138),
+		        torch.nn.Sigmoid()
 		)
 
 	def forward(self, x):

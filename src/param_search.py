@@ -76,7 +76,7 @@ def train_job(
 	# lazy creation; create model saving path.
 	pathlib.Path(run_path.format(run_name=run_name)).mkdir(
 		parents = True,
-		exist_ok = False
+		exist_ok = True
 	)
 	
 	model = AutoEncoder(
@@ -134,8 +134,8 @@ def train_job(
 			# Update training stats
 			train_running_loss += train_loss.item() * train_inputs.size(0)
 			train_running_mse += train_mse.item()
-			train_labels_batchwise.append(train_labels.detach().numpy())
-			train_predictions_batchwise.append(train_outputs.detach().numpy())
+			train_labels_batchwise.append(train_labels.cpu().detach().numpy())
+			train_predictions_batchwise.append(train_outputs.cpu().detach().numpy())
 			print(f"Training Step: {idx} of {num_train_steps}", end='\r')
 
 		# CUDA cleanup
@@ -177,8 +177,8 @@ def train_job(
 			# Update validation stats
 			valid_running_loss += valid_loss.item() * valid_inputs.size(0)
 			valid_running_mse += valid_mse.item()
-			valid_labels_batchwise.append(valid_labels.detach().numpy())
-			valid_predictions_batchwise.append(valid_outputs.detach().numpy())
+			valid_labels_batchwise.append(valid_labels.cpu().detach().numpy())
+			valid_predictions_batchwise.append(valid_outputs.cpu().detach().numpy())
 
 		# CUDA cleanup
 		if torch.cuda.is_available():
