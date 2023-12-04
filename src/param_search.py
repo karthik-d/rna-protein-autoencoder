@@ -3,6 +3,7 @@ import pathlib
 import os
 import itertools
 import numpy as np
+import pandas as pd
 
 from nn.simple_autoencoder import AutoEncoder
 from data.covid_dataset import CovidDataset
@@ -10,7 +11,9 @@ from utils.metrics import compute_colwise_correlations
 
 
 print("GPU Access:", torch.cuda.is_available())
-epoch_model_path = "../data/models/{run_name}/epoch-{epoch}_mse-{mse:.3f}_loss-{loss:.3f}.pth"
+run_path = "../data/models/{run_name}"
+epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
+epoch_stats_path = os.path.join(run_path, "stats.csv")
 
 device = 'cpu'
 # device = 'cuda:0'
@@ -67,6 +70,18 @@ def train_job(
 		batch_size=batch_size,
 		input_type=input_type
 	)
+
+	# init accumulators.
+	train_stats = dict(
+		loss = [],
+		mse = [],
+		corr = [],
+	)
+	valid_stats = dict(
+		loss = [],
+		mse = [],
+		corr = []
+	)
 	for epoch in range(num_epochs):
 
 		# TRAINING PHASE --------
@@ -104,20 +119,19 @@ def train_job(
 			train_predictions_batchwise.append(train_outputs.detach().numpy())
 			print(f"Training Step: {idx} of {num_train_steps}", end='\r')
 
-
-		# Store training stats
-		train_loss_stat = train_running_loss / len(train_loader.dataset)
-		train_mse_stat = train_running_mse / len(train_loader.dataset)
-
-		
 		# CUDA cleanup
 		if torch.cuda.is_available():
 			torch.cuda.empty_cache()
 
 		all_train_labels = np.concatenate(train_labels_batchwise)
 		all_train_predictions = np.concatenate(train_predictions_batchwise)
-		train_corr_stat = compute_colwise_correlations(all_train_labels, all_train_predictions)
+		
+		# Store training stats
+		valid_stats['loss'].append(train_running_loss / len(train_loader.dataset))
+		valid_stats['mse'].append(train_running_mse / len(train_loader.dataset))
+		valid_stats['corr'].append(compute_colwise_correlations(all_train_labels, all_train_predictions))
 
+		
 		# VALIDATION PHASE --------
 		model.train(mode=False)
 
@@ -140,7 +154,6 @@ def train_job(
 					target=valid_labels
 				)
 				valid_mse = mse_function(valid_outputs, valid_labels)
-				valid_pr = torch.corrcoef(torch.cat([valid_outputs, valid_labels]))
 
 			# Update validation stats
 			valid_running_loss += valid_loss.item() * valid_inputs.size(0)
@@ -148,28 +161,39 @@ def train_job(
 			valid_labels_batchwise.append(valid_labels.detach().numpy())
 			valid_predictions_batchwise.append(valid_outputs.detach().numpy())
 
-
-		# Store validation stats
-		valid_loss_stat = valid_running_loss / len(valid_loader.dataset)
-		valid_mse_stat = valid_running_mse / len(valid_loader.dataset)
-
 		# CUDA cleanup
 		if torch.cuda.is_available():
 			torch.cuda.empty_cache()
 			
 		all_valid_labels = np.concatenate(valid_labels_batchwise)
 		all_valid_predictions = np.concatenate(valid_predictions_batchwise)
-		valid_corr_stat = compute_colwise_correlations(all_valid_labels, all_valid_predictions)
+
+		# Store validation stats
+		valid_stats['loss'].append(valid_running_loss / len(valid_loader.dataset))
+		valid_stats['mse'].append(valid_running_mse / len(valid_loader.dataset))
+		valid_stats['corr'].append(compute_colwise_correlations(all_valid_labels, all_valid_predictions))
 
 		# compute metrics.
 		print(f'Epoch [{epoch + 1}/{num_epochs}]')
-		print(f'[Training]. Loss: {train_loss_stat}, MSE: {train_mse_stat}, Corr: {np.mean(train_corr_stat)}.')
-		print(f'[Validation]. Loss: {valid_loss_stat}, MSE: {valid_mse_stat}, Corr: {np.mean(valid_corr_stat)}.')
+		print(f"[Training]. Loss: {train_stats['loss']}, MSE: {train_stats['mse']}, Corr: {np.mean(train_stats['corr'])}.")
+		print(f"[Validation]. Loss: {valid_stats['loss']}, MSE: {valid_stats['mse']}, Corr: {np.mean(valid_stats['corr'])}.")
 		
 		# save current model --> replaced at each epoch.
 		print("saving model state ...")
 		torch.save(
 			model.state_dict(), 
-			epoch_model_path.format(epoch=epoch, loss=valid_loss_stat, mse=valid_mse_stat)
+			epoch_model_path.format(
+				epoch=epoch, 
+				loss=valid_stats['loss'], 
+				corr=valid_stats['corr'], 
+				run_name=run_name
+			)
 		)
+
+	# save training stats.
+		pd.read_csv()
+
+
+	#f"run_lr-{learning_rate:.2e}_ls-{latent_space}_inp-{input_type}"
     
+
