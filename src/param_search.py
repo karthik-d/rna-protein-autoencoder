@@ -45,12 +45,12 @@ mse_function = torch.nn.MSELoss()
 
 # Load data 
 
-def get_data_loaders(batch_size, input_type):
+def get_data_loaders(batch_size, input_type, normalization_method):
 	
 	# TODO: use `input_type` to determine the data input type -- norm and raw.
 
-	train_dataset = CovidDataset(version='two', split='train', input_type=input_type)
-	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type)
+	train_dataset = CovidDataset(version='two', split='train', input_type=input_type, normalization_method=normalization_method)
+	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type, normalization_method=normalization_method)
 	# wrap dataset into dataloader.
 	return torch.utils.data.DataLoader(
 		train_dataset,
@@ -124,7 +124,7 @@ def train_job(
 
 			# Propagate forward and back
 			with torch.set_grad_enabled(mode=True):
-				train_outputs = model(train_inputs)
+				train_outputs, _ = model(train_inputs)
 				train_loss = mae_function(
 					input=train_outputs,
 					target=train_labels
@@ -169,7 +169,7 @@ def train_job(
 
 			# Feed-Forward ONLY!
 			with torch.set_grad_enabled(mode=False):
-				valid_outputs = model(valid_inputs)
+				valid_outputs, latent_repr = model(valid_inputs)
 				valid_loss = mae_function(
 					input=valid_outputs, 
 					target=valid_labels
@@ -251,7 +251,7 @@ for inp_type in INPUT_TYPES:
 			decay_rate = dr,
 			latent_space = n_latent_space,
 			run_name = run_name,
-			output_activation='linear',     # can be: ['linear', 'sigmoid']
+			output_activation = 'linear',     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
 			num_epochs = 2

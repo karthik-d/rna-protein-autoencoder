@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn import preprocessing
-from sklearn.externals import joblib
+import joblib
 
 import pandas as pd
 import torch
@@ -103,9 +103,9 @@ class CovidDataset(Dataset):
 		self.rna_split = rna_data.to_df().loc[reqd_rows]
 	
 
-	def preprocess_input(self):
+	def preprocess_data(self):
 		
-		# 1. Data normalization.
+		# 1. Input data normalization.
 		if self.normalization_method == 'minmax':
 			scaler_path = os.path.join(self.DATA_PATH, "minmax_scaler.save")
 			
