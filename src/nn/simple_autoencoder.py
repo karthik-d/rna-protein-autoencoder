@@ -2,14 +2,14 @@ import torch
 
 class AutoEncoder(torch.nn.Module):
     
-	def __init__(self, n_latent_space):
+	def __init__(self, n_latent_space, n_input_size=2000, output_activation='linear'):
 		super().__init__()
 			
 		# Building an linear encoder with Linear
 		# layer followed by Relu activation function
-		# 3000 ==> n_latent_space
+		# n_input_size ==> n_latent_space
 		self.encoder = torch.nn.Sequential(
-			torch.nn.Linear(2000, 1024),
+			torch.nn.Linear(n_input_size, 1024),
 			torch.nn.ReLU(),
 			torch.nn.Linear(1024, 256),
 			torch.nn.ReLU(),
@@ -23,16 +23,25 @@ class AutoEncoder(torch.nn.Module):
 		# Building an linear decoder with Linear
 		# layer followed by Relu activation function
 		# n_latent_space ==> 138
-		self.decoder = torch.nn.Sequential(
+		decoder_modules = [
 			torch.nn.Linear(n_latent_space, 32),
 			torch.nn.ReLU(),
 			torch.nn.Linear(32, 64),
 			torch.nn.ReLU(),
-			torch.nn.Linear(64, 138),
-		        torch.nn.Sigmoid()
-		)
+			torch.nn.Linear(64, 138)
+		]
+
+		# decide activation function.
+		if output_activation == 'linear':
+			pass 
+		elif output_activation == 'sigmoid':
+			decoder_modules.append(torch.nn.Sigmoid())
+
+		# make decoder.
+		self.decoder = torch.nn.Sequential(*decoder_modules)
+		
 
 	def forward(self, x):
 		encoded = self.encoder(x)
 		decoded = self.decoder(encoded)
-		return decoded
+		return decoded, encoded

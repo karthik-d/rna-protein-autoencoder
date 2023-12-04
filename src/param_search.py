@@ -12,7 +12,7 @@ from utils.metrics import compute_colwise_correlations
 
 # PARAM SWEEP ---------------------
 LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
-DECAY_RATES = [ 1e-2, 1e-3, 1e-4 ]
+DECAY_RATES = [ 1e-2, 1e-3 ]
 INPUT_TYPES = ['norm', 'raw']
 LATENT_SPACES = [ 8, 16, 24 ]
 # ---------------------------------
@@ -40,7 +40,7 @@ training_summary_path = os.path.join(run_path, "training-summary.csv")
  
 # Validation using MSE Loss function
 
-loss_function = torch.nn.CrossEntropyLoss()
+mae_function = torch.nn.L1Loss()
 mse_function = torch.nn.MSELoss()
 
 # Load data 
@@ -68,6 +68,7 @@ def train_job(
 	decay_rate,
 	latent_space,
 	run_name,
+	output_activation,
 	train_loader,
 	valid_loader,
 	num_epochs = 100
@@ -80,7 +81,8 @@ def train_job(
 	)
 	
 	model = AutoEncoder(
-		n_latent_space=latent_space
+		n_latent_space=latent_space,
+		output_activation=output_activation
 	).to(device)
 	
 	# Using an Adam Optimizer.
@@ -123,7 +125,7 @@ def train_job(
 			# Propagate forward and back
 			with torch.set_grad_enabled(mode=True):
 				train_outputs = model(train_inputs)
-				train_loss = loss_function(
+				train_loss = mae_function(
 					input=train_outputs,
 					target=train_labels
 				)
@@ -168,7 +170,7 @@ def train_job(
 			# Feed-Forward ONLY!
 			with torch.set_grad_enabled(mode=False):
 				valid_outputs = model(valid_inputs)
-				valid_loss = loss_function(
+				valid_loss = mae_function(
 					input=valid_outputs, 
 					target=valid_labels
 				)
@@ -220,6 +222,10 @@ def train_job(
 	}}).to_csv(training_summary_path.format(run_name=run_name))
 
 
+	# save training plots.
+
+
+
 
 
 # -------------- START Training ---------------
@@ -232,7 +238,8 @@ for inp_type in INPUT_TYPES:
 	# load data. caching to reduce data loading calls.
 	train_loader, valid_loader = get_data_loaders(
 		batch_size = 256, # change to 256 (totalVI), originally 32
-		input_type = inp_type
+		input_type = inp_type,
+		normalization_method = None     # can be: [None, 'minmax']
 	)
 
 	for lr, dr, n_latent_space in itertools.product(
@@ -244,6 +251,7 @@ for inp_type in INPUT_TYPES:
 			decay_rate = dr,
 			latent_space = n_latent_space,
 			run_name = run_name,
+			output_activation='linear',     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
 			num_epochs = 2
