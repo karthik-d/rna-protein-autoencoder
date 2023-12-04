@@ -8,11 +8,12 @@ import pandas as pd
 from nn.simple_autoencoder import AutoEncoder
 from data.covid_dataset import CovidDataset
 from utils.metrics import compute_colwise_correlations
+from utils.plots import save_line_plots
 
 
 # PARAM SWEEP ---------------------
 LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
-DECAY_RATES = [ 1e-2, 1e-3, 1e-4 ]
+DECAY_RATES = [ 1e-2, 1e-3 ]
 INPUT_TYPES = ['norm', 'raw']
 LATENT_SPACES = [ 8, 16, 24 ]
 # ---------------------------------
@@ -21,36 +22,41 @@ LATENT_SPACES = [ 8, 16, 24 ]
 
 ### Model Configuration
 
-# init GPU
-
-FLAG = torch.cuda.is_available()
-device = torch.device("cuda:0" if FLAG else "cpu")
-print("GPU Access:", FLAG)
+# init GPU.
+gpu_is_available = torch.cuda.is_available()
+device = torch.device("cuda:0" if gpu_is_available else "cpu")
+print("GPU Access:", gpu_is_available)
 print("DEVICE:", device)
-if FLAG:
+if gpu_is_available:
     print("DEVICE Name:", torch.cuda.get_device_name(0))
 
 
-# configure path
-
-run_path = "../data/models/{run_name}"
+# configure paths.
+models_path = "../data/models"
+run_path = os.path.join(models_path, "run_{run_combination_str}")
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
 training_summary_path = os.path.join(run_path, "training-summary.csv")
+training_plots_path = os.path.join(models_path, "training_plots")
+
+pathlib.Path(training_plots_path).mkdir(
+	exist_ok = True,
+	parents = True
+)
 
  
 # Validation using MSE Loss function
 
-loss_function = torch.nn.CrossEntropyLoss()
+mae_function = torch.nn.L1Loss()
 mse_function = torch.nn.MSELoss()
 
 # Load data 
 
-def get_data_loaders(batch_size, input_type):
+def get_data_loaders(batch_size, input_type, normalization_method):
 	
 	# TODO: use `input_type` to determine the data input type -- norm and raw.
 
-	train_dataset = CovidDataset(version='two', split='train', input_type=input_type)
-	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type)
+	train_dataset = CovidDataset(version='two', split='train', input_type=input_type, normalization_method=normalization_method)
+	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type, normalization_method=normalization_method)
 	# wrap dataset into dataloader.
 	return torch.utils.data.DataLoader(
 		train_dataset,
@@ -67,20 +73,22 @@ def train_job(
 	learning_rate,
 	decay_rate,
 	latent_space,
-	run_name,
+	run_combination_str,
+	output_activation,
 	train_loader,
 	valid_loader,
 	num_epochs = 100
 ):
 	
 	# lazy creation; create model saving path.
-	pathlib.Path(run_path.format(run_name=run_name)).mkdir(
+	pathlib.Path(run_path.format(run_combination_str=run_combination_str)).mkdir(
 		parents = True,
 		exist_ok = True
 	)
 	
 	model = AutoEncoder(
-		n_latent_space=latent_space
+		n_latent_space=latent_space,
+		output_activation=output_activation
 	).to(device)
 	
 	# Using an Adam Optimizer.
@@ -122,8 +130,8 @@ def train_job(
 
 			# Propagate forward and back
 			with torch.set_grad_enabled(mode=True):
-				train_outputs = model(train_inputs)
-				train_loss = loss_function(
+				train_outputs, _ = model(train_inputs)
+				train_loss = mae_function(
 					input=train_outputs,
 					target=train_labels
 				)
@@ -167,8 +175,8 @@ def train_job(
 
 			# Feed-Forward ONLY!
 			with torch.set_grad_enabled(mode=False):
-				valid_outputs = model(valid_inputs)
-				valid_loss = loss_function(
+				valid_outputs, latent_repr = model(valid_inputs)
+				valid_loss = mae_function(
 					input=valid_outputs, 
 					target=valid_labels
 				)
@@ -205,20 +213,31 @@ def train_job(
 				epoch=epoch, 
 				loss=valid_stats['loss'][-1], 
 				corr=valid_stats['corr'][-1], 
-				run_name=run_name
+				run_combination_str=run_combination_str
 			)
 		)
 
-	# save training stats.
 	stat_names = ['loss', 'mse', 'corr']
+
+	# save training stats.
 	pd.DataFrame({**{
 		f'train_{stat}': train_stats[stat]
 		for stat in stat_names
 	}, **{
 		f'valid_{stat}': valid_stats[stat]
 		for stat in stat_names
-	}}).to_csv(training_summary_path.format(run_name=run_name))
+	}}).to_csv(training_summary_path.format(run_combination_str=run_combination_str))
 
+
+	# save training plots.
+	for stat in stat_names:
+		save_line_plots(
+			x_data = [range(1, len(train_stats[stat])+1), range(1, len(valid_stats[stat])+1)],
+			y_data = [train_stats[stat], valid_stats[stat]],
+			labels = ['train', 'validation'],
+			axis_labels = {'x': 'Epochs', 'y': stat.title()},
+			savepath = os.path.join(training_plots_path, f"{stat}_{run_combination_str}.png")
+		)
 
 
 
@@ -231,20 +250,25 @@ for inp_type in INPUT_TYPES:
 
 	# load data. caching to reduce data loading calls.
 	train_loader, valid_loader = get_data_loaders(
-		batch_size = 256, # change to 256 (totalVI), originally 32
-		input_type = inp_type
+		batch_size = 256,                   # change to 256 (totalVI), originally 32
+		input_type = inp_type,
+		normalization_method = 'minmax'     # can be: [None, 'minmax']
 	)
 
-	for lr, dr, n_latent_space in itertools.product(
+	param_grid = tuple(itertools.product(
 		LEARNING_RATES, DECAY_RATES, LATENT_SPACES
-	):
-		run_name = f"run_lr-{lr:.2e}_dr-{dr:.2e}_ls-{n_latent_space}_inp-{inp_type}"
+	))
+	print(f"\nRunning param search on {len(param_grid)*2} combinations ...")
+	for lr, dr, n_latent_space in param_grid:
+
+		run_combination_str = f"run_lr-{lr:.2e}_dr-{dr:.2e}_ls-{n_latent_space}_inp-{inp_type}"
 		train_job(
 			learning_rate = lr,
 			decay_rate = dr,
 			latent_space = n_latent_space,
-			run_name = run_name,
+			run_combination_str = run_combination_str,
+			output_activation = 'linear',     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
-			num_epochs = 2
+			num_epochs = 10
 		)
