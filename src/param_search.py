@@ -237,9 +237,9 @@ for inp_type in INPUT_TYPES:
 
 	# load data. caching to reduce data loading calls.
 	train_loader, valid_loader = get_data_loaders(
-		batch_size = 256, # change to 256 (totalVI), originally 32
+		batch_size = 256,                   # change to 256 (totalVI), originally 32
 		input_type = inp_type,
-		normalization_method = None     # can be: [None, 'minmax']
+		normalization_method = 'minmax'     # can be: [None, 'minmax']
 	)
 
 	for lr, dr, n_latent_space in itertools.product(
