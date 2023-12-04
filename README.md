@@ -23,7 +23,7 @@ Set the parameter `output_activation` in `AutoEncoder()` call to one of:
 - Linear: `'linear'`
 - Sigmoid: `'sigmoid'`
 
-### Input data normalization.
+### Protein data normalization.
 
 Set the parameter `normalization_method` in `CovidDataset()` call to one of:
 - MinMax Linear Scaling between 0 and 1: `'minmax'`
