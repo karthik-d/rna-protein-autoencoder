@@ -10,10 +10,13 @@ class AutoEncoder(torch.nn.Module):
 		# n_input_size ==> n_latent_space
 		self.encoder = torch.nn.Sequential(
 			torch.nn.Linear(n_input_size, 1024),
+			torch.nn.BatchNorm1d(1024),
 			torch.nn.ReLU(),
 			torch.nn.Linear(1024, 256),
+			torch.nn.BatchNorm1d(256),
 			torch.nn.ReLU(),
 			torch.nn.Linear(256, 128),
+			torch.nn.BatchNorm1d(128),
 			torch.nn.ReLU(),
 			torch.nn.Linear(128, 32),
 			torch.nn.ReLU(),
@@ -25,8 +28,10 @@ class AutoEncoder(torch.nn.Module):
 		# n_latent_space ==> 138
 		decoder_modules = [
 			torch.nn.Linear(n_latent_space, 32),
+			torch.nn.BatchNorm1d(32),
 			torch.nn.ReLU(),
 			torch.nn.Linear(32, 64),
+			torch.nn.BatchNorm1d(64),
 			torch.nn.ReLU(),
 			torch.nn.Linear(64, 138)
 		]

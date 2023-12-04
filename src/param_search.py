@@ -270,5 +270,5 @@ for inp_type in INPUT_TYPES:
 			output_activation = 'linear',     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
-			num_epochs = 10
+			num_epochs = 100
 		)

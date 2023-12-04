@@ -110,15 +110,15 @@ class CovidDataset(Dataset):
 
 	def preprocess_data(self):
 		
-		# 1. Input data normalization.
+		# 1. Protein data normalization.
 		if self.normalization_method == 'minmax':
 			scaler_path = os.path.join(self.DATA_PATH, "minmax_scaler.save")
 			
 			if self.split != 'train':
 				# read previous norm params; else, throw error.
 				scaler = joblib.load(scaler_path) 
-				self.rna_split = pd.DataFrame(scaler.transform(self.rna_split), columns=self.rna_split.columns)
+				self.protein_split = pd.DataFrame(scaler.transform(self.protein_split), columns=self.protein_split.columns)
 			else:
 				scaler = preprocessing.MinMaxScaler()
-				self.rna_split = pd.DataFrame(scaler.fit_transform(self.rna_split), columns=self.rna_split.columns)
+				self.protein_split = pd.DataFrame(scaler.fit_transform(self.protein_split), columns=self.protein_split.columns)
 				joblib.dump(scaler, scaler_path)
