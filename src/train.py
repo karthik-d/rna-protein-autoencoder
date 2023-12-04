@@ -8,7 +8,7 @@ from data.covid_dataset import CovidDataset
 from utils.metrics import compute_colwise_correlations
 
 
-BATCH_SIZE = 32 # might be too SMALL, consider changing to 256
+BATCH_SIZE = 256 # change to 256, originally 32
 RUN_NAME = 1
 
 
