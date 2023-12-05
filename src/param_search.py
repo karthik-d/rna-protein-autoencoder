@@ -11,8 +11,24 @@ from utils.metrics import compute_colwise_correlations, compute_colwise_spearman
 from utils.plots import save_line_plots
 
 
+# Specification
+print()
+print('--- Run Specification ---')
+
+DATA_VERSION='three'
+NORMALIZATION=None     # None, 'minmax'
+OUTPUT_LAYER='sigmoid'  # 'linear', 'sigmoid'
+BATCH_SIZE=256
+
+print("DATA_VERSION:", DATA_VERSION)
+print("NORMALIZATION:", NORMALIZATION)
+print("OUTPUT_LAYER:", OUTPUT_LAYER)
+print()
+
+
+
 # PARAM SWEEP ---------------------
-LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
+LEARNING_RATES = [ 1e-2, 1e-3, 1e-4, 1e-5 ]
 DECAY_RATES = [ 1e-2, 1e-3 ]
 INPUT_TYPES = ['norm', 'raw']
 LATENT_SPACES = [ 8, 16, 24 ]
@@ -32,7 +48,10 @@ if gpu_is_available:
 
 
 # configure paths.
-models_path = "../data/models"
+if NORMALIZATION == 'minmax':
+    models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION
+else:
+    models_path = "../data/models/" + "version_" + DATA_VERSION
 run_path = os.path.join(models_path, "run_{run_combination_str}")
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
 training_summary_path = os.path.join(run_path, "training-summary.csv")
@@ -46,15 +65,15 @@ pathlib.Path(training_plots_path).mkdir(
  
 # Validation using MSE Loss function
 
-mae_function = torch.nn.L1Loss()
+mae_function = torch.nn.MSELoss() # L1Loss, MSELoss, CrossEntropyLoss
 mse_function = torch.nn.MSELoss()
 
 # Load data 
 
 def get_data_loaders(batch_size, input_type, normalization_method):
 
-	train_dataset = CovidDataset(version='two', split='train', input_type=input_type, normalization_method=normalization_method)
-	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type, normalization_method=normalization_method)
+	train_dataset = CovidDataset(version=DATA_VERSION, split='train', input_type=input_type, normalization_method=normalization_method)
+	valid_dataset = CovidDataset(version=DATA_VERSION, split='valid', input_type=input_type, normalization_method=normalization_method)
 	# wrap dataset into dataloader.
 	return torch.utils.data.DataLoader(
 		train_dataset,
@@ -248,9 +267,9 @@ for inp_type in INPUT_TYPES:
 
 	# load data. caching to reduce data loading calls.
 	train_loader, valid_loader = get_data_loaders(
-		batch_size = 256,                   # change to 256 (totalVI), originally 32
+		batch_size = BATCH_SIZE,               # totalVI: 256 
 		input_type = inp_type,
-		normalization_method = 'minmax'     # can be: [None, 'minmax']
+		normalization_method = NORMALIZATION     # can be: [None, 'minmax']
 	)
 
 	param_grid = tuple(itertools.product(
@@ -265,8 +284,8 @@ for inp_type in INPUT_TYPES:
 			decay_rate = dr,
 			latent_space = n_latent_space,
 			run_combination_str = run_combination_str,
-			output_activation = 'linear',     # can be: ['linear', 'sigmoid']
+			output_activation = OUTPUT_LAYER,     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
-			num_epochs = 100
+			num_epochs = 30
 		)
