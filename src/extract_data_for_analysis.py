@@ -10,7 +10,10 @@ from data.covid_dataset import CovidDataset
 
 # SET WEIGHT FILE ------------------
 WEIGHTFILE_PATHS = [
-	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-1_corr-nan_loss-0.061.pth"
+	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
+	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
+	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
+
 ]
 NORMALIZATION_METHOD = 'minmax'
 OUTPUT_ACTIVATION = 'sigmoid'
@@ -43,15 +46,23 @@ pathlib.Path(output_root).mkdir(
 # get data loaders.
 def get_data_loaders(batch_size, input_type, normalization_method, verbose=True):
 
+	_  = CovidDataset(
+		version='three', 
+		split='train', 
+		input_type=input_type, 
+		normalization_method=normalization_method,
+		batch_size=batch_size
+	)
+
 	test_dataset = CovidDataset(
-		version='two', 
+		version='three', 
 		split='test', 
 		input_type=input_type, 
 		normalization_method=normalization_method,
 		batch_size=batch_size
 	)
 	valid_dataset = CovidDataset(
-		version='two', 
+		version='three', 
 		split='valid', 
 		input_type=input_type, 
 		normalization_method=normalization_method,

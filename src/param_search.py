@@ -55,7 +55,7 @@ if gpu_is_available:
 if NORMALIZATION == 'minmax':
     models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION + '_' + NUM_EPOCHS 
 else:
-    models_path = "../data/models/" + "version_" + DATA_VERSION
+    models_path = "../data/models/" + "version_" + DATA_VERSION + NUM_EPOCHS
 run_path = os.path.join(models_path, "run_{run_combination_str}")
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
 training_summary_path = os.path.join(run_path, "training-summary.csv")
