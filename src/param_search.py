@@ -71,8 +71,6 @@ mse_function = torch.nn.MSELoss()
 # Load data 
 
 def get_data_loaders(batch_size, input_type, normalization_method):
-	
-	# TODO: use `input_type` to determine the data input type -- norm and raw.
 
 	train_dataset = CovidDataset(version=DATA_VERSION, split='train', input_type=input_type, normalization_method=normalization_method)
 	valid_dataset = CovidDataset(version=DATA_VERSION, split='valid', input_type=input_type, normalization_method=normalization_method)
