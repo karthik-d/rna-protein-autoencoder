@@ -16,6 +16,9 @@ class CovidDataset(Dataset):
 
 	def __init__(self, version='three', split='train', input_type='norm', normalization_method=None):
 		
+		# defaults.
+		self.verbose_render = False
+		
 		self.DATA_PATH = os.path.join("../data", f"version_{version}")
 		self.PROTEIN_DATA_PATH = os.path.join(self.DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_CITE.h5ad")
 		self.RNA_DATA_PATH = os.path.join(self.DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_RNA.h5ad")
@@ -54,10 +57,25 @@ class CovidDataset(Dataset):
 		if torch.is_tensor(idx):
 			idx = idx.tolist()
 
-		x_data = np.array(self.rna_split.iloc[idx, :]).astype(np.float32)
-		y_data = np.array(self.protein_split.iloc[idx, :]).astype(np.float32)
+		x_data_df = self.rna_split.iloc[idx, :]
+		y_data_df = self.protein_split.iloc[idx, :]
+		# package into required types.
+		x_data = np.array(x_data_df).astype(np.float32)
+		y_data = np.array(y_data_df).astype(np.float32)
 
-		return (x_data, y_data)
+		if not self.verbose_render:
+			return (x_data, y_data)
+		else:
+			(x_data_df.columns.values, y_data_df.columns.values), (x_data_df.index.values)
+
+
+	# TODO: This is torch-like, but parameterize with custom dataloader.
+	def set_verbose_render(self, state):
+		self.verbose_render = state
+	
+
+	def get_col_orderings(self):
+		return (self.rna_split.columns, self.protein_split.columns)
 	
 
 	def get_input_type(self):
