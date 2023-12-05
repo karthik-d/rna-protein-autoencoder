@@ -7,7 +7,7 @@ import pandas as pd
 
 from nn.simple_autoencoder import AutoEncoder
 from data.covid_dataset import CovidDataset
-from utils.metrics import compute_colwise_correlations
+from utils.metrics import compute_colwise_correlations, compute_colwise_spearman_correlations
 from utils.plots import save_line_plots
 
 
@@ -98,17 +98,17 @@ def train_job(
 		weight_decay = decay_rate
 	)
 
+	stat_names = ['loss', 'mse', 'pearson', 'spearman']
+
 	# init accumulators.
-	train_stats = dict(
-		loss = [],
-		mse = [],
-		corr = [],
-	)
-	valid_stats = dict(
-		loss = [],
-		mse = [],
-		corr = []
-	)
+	train_stats = {
+		stat: []
+		for stat in stat_names
+	}
+	valid_stats = {
+		stat: []
+		for stat in stat_names
+	}
 	for epoch in range(num_epochs):
 
 		# TRAINING PHASE --------
@@ -156,7 +156,8 @@ def train_job(
 		# Store training stats
 		train_stats['loss'].append(train_running_loss / len(train_loader.dataset))
 		train_stats['mse'].append(train_running_mse / len(train_loader.dataset))
-		train_stats['corr'].append(np.mean(compute_colwise_correlations(all_train_labels, all_train_predictions)))
+		train_stats['pearson'].append(np.mean(compute_colwise_correlations(all_train_labels, all_train_predictions)))
+		train_stats['spearman'].append(np.mean(compute_colwise_spearman_correlations(all_train_labels, all_train_predictions)))
 
 		
 		# VALIDATION PHASE --------
@@ -198,12 +199,13 @@ def train_job(
 		# Store validation stats
 		valid_stats['loss'].append(valid_running_loss / len(valid_loader.dataset))
 		valid_stats['mse'].append(valid_running_mse / len(valid_loader.dataset))
-		valid_stats['corr'].append(np.mean(compute_colwise_correlations(all_valid_labels, all_valid_predictions)))
+		valid_stats['pearson'].append(np.mean(compute_colwise_correlations(all_valid_labels, all_valid_predictions)))
+		valid_stats['spearman'].append(np.mean(compute_colwise_spearman_correlations(all_valid_labels, all_valid_predictions)))
 
 		# compute metrics.
 		print(f'Epoch [{epoch + 1}/{num_epochs}]')
-		print(f"[Training]. Loss: {train_stats['loss'][-1]}, MSE: {train_stats['mse'][-1]}, Corr: {np.mean(train_stats['corr'][-1])}.")
-		print(f"[Validation]. Loss: {valid_stats['loss'][-1]}, MSE: {valid_stats['mse'][-1]}, Corr: {np.mean(valid_stats['corr'][-1])}.")
+		print(f"[Training]. Loss: {train_stats['loss'][-1]}, MSE: {train_stats['mse'][-1]}, Pearson: {np.mean(train_stats['pearson'][-1])}, Spearman: {np.mean(train_stats['spearman'][-1])}.")
+		print(f"[Validation]. Loss: {valid_stats['loss'][-1]}, MSE: {valid_stats['mse'][-1]}, Pearson: {np.mean(valid_stats['pearson'][-1])}, Spearman: {np.mean(train_stats['spearman'][-1])}.")
 		
 		# save current model --> replaced at each epoch.
 		print("saving model state ...")
@@ -212,12 +214,10 @@ def train_job(
 			epoch_model_path.format(
 				epoch=epoch, 
 				loss=valid_stats['loss'][-1], 
-				corr=valid_stats['corr'][-1], 
+				corr=valid_stats['pearson'][-1], 
 				run_combination_str=run_combination_str
 			)
 		)
-
-	stat_names = ['loss', 'mse', 'corr']
 
 	# save training stats.
 	pd.DataFrame({**{
