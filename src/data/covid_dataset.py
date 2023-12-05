@@ -11,13 +11,16 @@ import scanpy as sc
 import numpy as np
 
 
+# TODO: Don't take batch_size in dataset.
+
 
 class CovidDataset(Dataset):
 
-	def __init__(self, version='three', split='train', input_type='norm', normalization_method=None):
+	def __init__(self, version='three', split='train', input_type='norm', normalization_method=None, batch_size=32):
 		
-		# defaults.
+		# defaults and decorations.
 		self.verbose_render = False
+		self.batch_size = batch_size
 		
 		self.DATA_PATH = os.path.join("../data", f"version_{version}")
 		self.PROTEIN_DATA_PATH = os.path.join(self.DATA_PATH, "covid-flu_HC_D0_selectedCellTypes_CITE.h5ad")
@@ -156,10 +159,10 @@ class CovidDataset(Dataset):
 			self.curr_batch_protein_cols = [batch_elem[3] for batch_elem in batch_data]
 			self.curr_batch_cells = [batch_elem[4] for batch_elem in batch_data]
 			# retain only reqd. data in 
-			return list(zip(
-				[batch_elem[0] for batch_elem in batch_data], 
-				[batch_elem[1] for batch_elem in batch_data]
-			))
+			return tuple(zip(
+				[torch.from_numpy(batch_elem[0].reshape((self.batch_size, -1))) for batch_elem in batch_data], 
+				[torch.from_numpy(batch_elem[1].reshape((self.batch_size, -1))) for batch_elem in batch_data]
+			))[0]
 		
 
 	def get_curr_batch_metadata(self):
