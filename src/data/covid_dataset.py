@@ -53,30 +53,31 @@ class CovidDataset(Dataset):
 	
 
 	def __getitem__(self, idx):
-		
+	
 		if torch.is_tensor(idx):
 			idx = idx.tolist()
 
 		x_data_df = self.rna_split.iloc[idx, :]
 		y_data_df = self.protein_split.iloc[idx, :]
+		
 		# package into required types.
 		x_data = np.array(x_data_df).astype(np.float32)
 		y_data = np.array(y_data_df).astype(np.float32)
 
+		self.batch_metadata_registered = False
 		if not self.verbose_render:
 			return (x_data, y_data)
 		else:
-			(x_data_df.columns.values, y_data_df.columns.values), (x_data_df.index.values)
+			if torch.is_tensor(idx):
+				return (x_data, y_data, x_data_df.columns.values, y_data_df.columns.values, x_data_df.index.values)
+			else:
+				return (x_data, y_data, x_data_df.index.values, y_data_df.index.values, [x_data_df.name])
 
 
 	# TODO: This is torch-like, but parameterize with custom dataloader.
 	def set_verbose_render(self, state):
 		self.verbose_render = state
-	
 
-	def get_col_orderings(self):
-		return (self.rna_split.columns, self.protein_split.columns)
-	
 
 	def get_input_type(self):
 		return self.input_type
@@ -140,3 +141,31 @@ class CovidDataset(Dataset):
 				scaler = preprocessing.MinMaxScaler()
 				self.protein_split = pd.DataFrame(scaler.fit_transform(self.protein_split), columns=self.protein_split.columns)
 				joblib.dump(scaler, scaler_path)
+
+
+	def collation_register_metadata(self, batch_data):
+		# middleware function to interject DataLoader behavior and extract metadata.
+		# TODO: define custom dataloader.
+
+		if not self.verbose_render:
+			return batch_data 
+		else:
+			self.batch_metadata_registered = True
+			# register metadata.
+			self.curr_batch_rna_cols = [batch_elem[2] for batch_elem in batch_data]
+			self.curr_batch_protein_cols = [batch_elem[3] for batch_elem in batch_data]
+			self.curr_batch_cells = [batch_elem[4] for batch_elem in batch_data]
+			# retain only reqd. data in 
+			return list(zip(
+				[batch_elem[0] for batch_elem in batch_data], 
+				[batch_elem[1] for batch_elem in batch_data]
+			))
+		
+
+	def get_curr_batch_metadata(self):
+		if not self.batch_metadata_registered:
+			print("Warning: Metedata was never registered for this batch; unexpected behavior.")
+		return self.curr_batch_rna_cols, self.curr_batch_protein_cols, self.curr_batch_cells
+
+
+		

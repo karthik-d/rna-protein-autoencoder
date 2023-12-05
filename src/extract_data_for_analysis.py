@@ -11,7 +11,11 @@ from utils.plots import save_line_plots
 
 
 # SET WEIGHT FILE ------------------
-WEIGHTFILE_PATH = "../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-1_corr-nan_loss-0.061.pth"
+WEIGHTFILE_PATHS = [
+	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-1_corr-nan_loss-0.061.pth"
+]
+NORMALIZATION_METHOD = 'minmax'
+OUTPUT_ACTIVATION = 'sigmoid'
 # ----------------------------------
 
 
@@ -35,24 +39,29 @@ pathlib.Path(output_root).mkdir(
 
 
 # get data loaders.
-def get_data_loaders(batch_size, input_type, normalization_method):
+def get_data_loaders(batch_size, input_type, normalization_method, verbose=True):
 
 	test_dataset = CovidDataset(version='two', split='test', input_type=input_type, normalization_method=normalization_method)
 	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type, normalization_method=normalization_method)
+	# set verbosity
+	test_dataset.set_verbose_render(state=verbose)
+	valid_dataset.set_verbose_render(state=verbose)
 	# wrap dataset into dataloader.
 	return torch.utils.data.DataLoader(
 		test_dataset,
 		batch_size=batch_size,
-		shuffle=True
+		shuffle=True,
+		collate_fn=test_dataset.collation_register_metadata
 	), torch.utils.data.DataLoader(
 		valid_dataset,
 		batch_size=batch_size,
-		shuffle=False
+		shuffle=False,
+		collate_fn=valid_dataset.collation_register_metadata
 	)
 
 
 def extraction_job(
-	latent_space,
+	n_latent_space,
 	run_combination_str,
 	output_activation,
 	test_loader,
@@ -60,18 +69,14 @@ def extraction_job(
 	weight_path
 ):
 
-	# render data with labels.
-	valid_loader.set_verbose_render(state=True)
-	test_loader.set_verbose_render(state=True)
-
 	# lazy creation; create output saving path.
-	pathlib.Path(run_path.format(run_combination_str=run_combination_str)).mkdir(
+	pathlib.Path(output_dir_recipe.format(run_name=run_combination_str)).mkdir(
 		parents = True,
 		exist_ok = True
 	)
 	
 	model = AutoEncoder(
-		n_latent_space=latent_space,
+		n_latent_space=n_latent_space,
 		output_activation=output_activation
 	).to(device)
 
@@ -87,7 +92,10 @@ def extraction_job(
 	valid_latentspace_batchwise = []
 
 	# feed forward over all the validation data.
-	for idx, (valid_inputs, valid_labels), (valid_x_cols, valid_y_cols), valid_rows in enumerate(valid_loader):
+	for k in valid_loader:
+		print(k)
+		break
+	for idx, (valid_inputs, valid_labels) in enumerate(valid_loader):
 		valid_inputs = valid_inputs.to(device=device)
 		valid_labels = valid_labels.to(device=device)
 		
@@ -155,3 +163,33 @@ def extraction_job(
 		output_dir_recipe.format(run_name=run_combination_str),
 		"test-latentspace.tsv"
 	), sep='\t')
+
+
+for weight_path in WEIGHTFILE_PATHS:
+
+	# load weight parts.
+	epoch_str = os.path.basename(weight_path.split('_')[0])
+	param_str = pathlib.Path(os.path.dirname(weight_path)).parts[-1].lstrip("RUNrun_")
+
+	# extract params from string.
+	param_parts = param_str.split('_')
+	inp_type = param_parts[-1].split('-')[1]
+	n_latent_space = int(param_parts[-2].split('-')[1])
+
+	# get loaders.
+	# NOTE: set batch_size > 1; not cofigured for singular inputs.
+	test_loader, valid_loader = get_data_loaders(
+		batch_size = 1,
+		input_type = inp_type,
+		normalization_method = NORMALIZATION_METHOD
+	)
+
+	# run job.
+	extraction_job(
+		weight_path = weight_path,
+		run_combination_str = f"{param_str}_{epoch_str}",
+		valid_loader = valid_loader,
+		test_loader = test_loader,
+		output_activation = OUTPUT_ACTIVATION,
+		n_latent_space = n_latent_space
+	)
