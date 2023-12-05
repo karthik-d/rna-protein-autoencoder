@@ -11,8 +11,20 @@ from utils.metrics import compute_colwise_correlations, compute_colwise_spearman
 from utils.plots import save_line_plots
 
 
-# Specify data version
-DATA_VERSION='three'
+# Specification
+print()
+print('--- Run Specification ---')
+
+
+DATA_VERSION='two'
+NORMALIZATION=None     # None, 'minmax'
+OUTPUT_LAYER='sigmoid'  # 'linear', 'sigmoid'
+BATCH_SIZE=64
+
+print("DATA_VERSION:", DATA_VERSION)
+print("NORMALIZATION:", NORMALIZATION)
+print("OUTPUT_LAYER:", OUTPUT_LAYER)
+print()
 
 # PARAM SWEEP ---------------------
 LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
@@ -49,7 +61,7 @@ pathlib.Path(training_plots_path).mkdir(
  
 # Validation using MSE Loss function
 
-mae_function = torch.nn.L1Loss()
+mae_function = torch.nn.MSELoss() # L1Loss, MSELoss, CrossEntropyLoss
 mse_function = torch.nn.MSELoss()
 
 # Load data 
@@ -253,9 +265,9 @@ for inp_type in INPUT_TYPES:
 
 	# load data. caching to reduce data loading calls.
 	train_loader, valid_loader = get_data_loaders(
-		batch_size = 256,                   # change to 256 (totalVI), originally 32
+		batch_size = BATCH_SIZE,               # totalVI: 256 
 		input_type = inp_type,
-		normalization_method = 'minmax'     # can be: [None, 'minmax']
+		normalization_method = NORMALIZATION     # can be: [None, 'minmax']
 	)
 
 	param_grid = tuple(itertools.product(
@@ -270,8 +282,8 @@ for inp_type in INPUT_TYPES:
 			decay_rate = dr,
 			latent_space = n_latent_space,
 			run_combination_str = run_combination_str,
-			output_activation = 'linear',     # can be: ['linear', 'sigmoid']
+			output_activation = OUTPUT_LAYER,     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
-			num_epochs = 100
+			num_epochs = 50
 		)
