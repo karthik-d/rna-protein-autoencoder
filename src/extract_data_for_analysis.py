@@ -10,14 +10,16 @@ from data.covid_dataset import CovidDataset
 
 # SET WEIGHT FILE ------------------
 WEIGHTFILE_PATHS = [
-	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
-	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
-	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
+	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-6_corr-nan_loss-0.061.pth"
+	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
+	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
+	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
 
 ]
 NORMALIZATION_METHOD = 'minmax'
 OUTPUT_ACTIVATION = 'sigmoid'
 BATCH_SIZE = 256
+VERSION = 'two'
 # ----------------------------------
 
 
@@ -44,25 +46,25 @@ pathlib.Path(output_root).mkdir(
 
 
 # get data loaders.
-def get_data_loaders(batch_size, input_type, normalization_method, verbose=True):
+def get_data_loaders(version, batch_size, input_type, normalization_method, verbose=True):
 
-	_  = CovidDataset(
-		version='three', 
-		split='train', 
-		input_type=input_type, 
-		normalization_method=normalization_method,
-		batch_size=batch_size
-	)
+	# _  = CovidDataset(
+	# 	version=version, 
+	# 	split='train', 
+	# 	input_type=input_type, 
+	# 	normalization_method=normalization_method,
+	# 	batch_size=batch_size
+	# )
 
 	test_dataset = CovidDataset(
-		version='three', 
+		version=version, 
 		split='test', 
 		input_type=input_type, 
 		normalization_method=normalization_method,
 		batch_size=batch_size
 	)
 	valid_dataset = CovidDataset(
-		version='three', 
+		version=version, 
 		split='valid', 
 		input_type=input_type, 
 		normalization_method=normalization_method,
@@ -123,6 +125,7 @@ def extraction_job(
 	for idx, (valid_inputs, valid_labels) in enumerate(valid_loader):
 		valid_inputs = valid_inputs.to(device=device)
 		valid_labels = valid_labels.to(device=device)
+		print(valid_inputs.shape)
 		
 		# Feed-Forward ONLY!
 		with torch.set_grad_enabled(mode=False):
@@ -206,6 +209,7 @@ for weight_path in WEIGHTFILE_PATHS:
 
 	# get loaders.
 	test_loader, valid_loader, test_dataset, valid_dataset = get_data_loaders(
+		version = VERSION,
 		batch_size = BATCH_SIZE,
 		input_type = inp_type,
 		normalization_method = NORMALIZATION_METHOD

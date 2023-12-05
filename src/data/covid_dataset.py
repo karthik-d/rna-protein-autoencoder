@@ -153,21 +153,38 @@ class CovidDataset(Dataset):
 		if not self.verbose_render:
 			return batch_data 
 		else:
+			# fill remaining samples for batch
 			self.batch_metadata_registered = True
 			# register metadata.
-			self.curr_batch_rna_cols = [batch_elem[2] for batch_elem in batch_data]
-			self.curr_batch_protein_cols = [batch_elem[3] for batch_elem in batch_data]
-			self.curr_batch_cells = [batch_elem[4] for batch_elem in batch_data]
-			# retain only reqd. data in 
-			return tuple(zip(
-				[torch.from_numpy(batch_elem[0].reshape((self.batch_size, -1))) for batch_elem in batch_data], 
-				[torch.from_numpy(batch_elem[1].reshape((self.batch_size, -1))) for batch_elem in batch_data]
-			))[0]
+			self.curr_batch_rna_cols = batch_data[0][0]
+			self.curr_batch_protein_cols = batch_data[0][1]
+			self.curr_batch_cells = [batch_elem[4][0] for batch_elem in batch_data]
+			# retain only reqd. data.
+			batch_x_data_vec = np.array([batch_elem[0] for batch_elem in batch_data])
+			batch_y_data_vec = np.array([batch_elem[1] for batch_elem in batch_data])
+			# check if batch has lesser samples.
+			if batch_x_data_vec.shape[0]%self.batch_size == 0:
+				batch_x_data = torch.from_numpy(batch_x_data_vec.reshape((self.batch_size, -1))).to(torch.float32)
+				batch_y_data = torch.from_numpy(batch_y_data_vec.reshape((self.batch_size, -1))).to(torch.float32)
+			else:
+				# pad with initial rows.
+				n_reqd_rows = self.batch_size - batch_x_data_vec.shape[0]
+				batch_x_data = torch.from_numpy(np.concatenate(
+					[batch_x_data_vec, self.rna_split.iloc[range(n_reqd_rows), :].to_numpy()]
+				).reshape((self.batch_size, -1))).to(torch.float32)
+				batch_y_data = torch.from_numpy(np.concatenate(
+					[batch_y_data_vec, self.protein_split.iloc[range(n_reqd_rows), :].to_numpy()]
+				).reshape((self.batch_size, -1))).to(torch.float32)
+
+			return (
+				batch_x_data,
+				batch_y_data
+			)
 		
 
 	def get_curr_batch_metadata(self):
 		if not self.batch_metadata_registered:
-			print("Warning: Metedata was never registered for this batch; unexpected behavior.")
+			print("Warning: Metadata was never registered for this batch; unexpected behavior.")
 		return self.curr_batch_rna_cols, self.curr_batch_protein_cols, self.curr_batch_cells
 
 
