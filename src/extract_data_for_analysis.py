@@ -125,16 +125,16 @@ def extraction_job(
 	for idx, (valid_inputs, valid_labels) in enumerate(valid_loader):
 		valid_inputs = valid_inputs.to(device=device)
 		valid_labels = valid_labels.to(device=device)
-		print(valid_inputs.shape)
 		
 		# Feed-Forward ONLY!
 		with torch.set_grad_enabled(mode=False):
 			valid_outputs, valid_latent_repr = model(valid_inputs)
 
 		valid_x_cols, valid_y_cols, valid_rows = valid_dataset.get_curr_batch_metadata()
-		valid_labels_batchwise.append(pd.DataFrame(valid_labels, columns=valid_y_cols, index=valid_rows))
-		valid_predictions_batchwise.append(pd.DataFrame(valid_outputs, columns=valid_y_cols, index=valid_rows))
-		valid_latentspace_batchwise.append(pd.DataFrame(valid_latent_repr, index=valid_rows))
+		valid_labels_batchwise.append(pd.DataFrame(valid_labels[:len(valid_rows), :], columns=valid_y_cols, index=valid_rows))
+		valid_predictions_batchwise.append(pd.DataFrame(valid_outputs[:len(valid_rows), :], columns=valid_y_cols, index=valid_rows))
+		valid_latentspace_batchwise.append(pd.DataFrame(valid_latent_repr[:len(valid_rows), :], index=valid_rows))
+		print(valid_predictions_batchwise[-1].shape)
 
 	# CUDA cleanup.
 	if torch.cuda.is_available():
@@ -172,9 +172,9 @@ def extraction_job(
 			test_outputs, test_latent_repr = model(test_inputs)
 
 		test_x_cols, test_y_cols, test_rows = test_dataset.get_curr_batch_metadata()
-		test_labels_batchwise.append(pd.DataFrame(test_labels, columns=test_y_cols, index=test_rows))
-		test_predictions_batchwise.append(pd.DataFrame(test_outputs, columns=test_y_cols, index=test_rows))
-		test_latentspace_batchwise.append(pd.DataFrame(test_latent_repr, index=test_rows))
+		test_labels_batchwise.append(pd.DataFrame(test_labels[:len(test_rows), :], columns=test_y_cols, index=test_rows))
+		test_predictions_batchwise.append(pd.DataFrame(test_outputs[:len(test_rows), :], columns=test_y_cols, index=test_rows))
+		test_latentspace_batchwise.append(pd.DataFrame(test_latent_repr[:len(test_rows), :], index=test_rows))
 
 	# CUDA cleanup.
 	if torch.cuda.is_available():

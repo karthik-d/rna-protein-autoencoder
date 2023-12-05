@@ -156,8 +156,8 @@ class CovidDataset(Dataset):
 			# fill remaining samples for batch
 			self.batch_metadata_registered = True
 			# register metadata.
-			self.curr_batch_rna_cols = batch_data[0][0]
-			self.curr_batch_protein_cols = batch_data[0][1]
+			self.curr_batch_rna_cols = batch_data[0][2]
+			self.curr_batch_protein_cols = batch_data[0][3]
 			self.curr_batch_cells = [batch_elem[4][0] for batch_elem in batch_data]
 			# retain only reqd. data.
 			batch_x_data_vec = np.array([batch_elem[0] for batch_elem in batch_data])
