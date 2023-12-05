@@ -15,19 +15,20 @@ from utils.plots import save_line_plots
 print()
 print('--- Run Specification ---')
 
-
-DATA_VERSION='two'
+DATA_VERSION='three'
 NORMALIZATION=None     # None, 'minmax'
 OUTPUT_LAYER='sigmoid'  # 'linear', 'sigmoid'
-BATCH_SIZE=64
+BATCH_SIZE=256
 
 print("DATA_VERSION:", DATA_VERSION)
 print("NORMALIZATION:", NORMALIZATION)
 print("OUTPUT_LAYER:", OUTPUT_LAYER)
 print()
 
+
+
 # PARAM SWEEP ---------------------
-LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
+LEARNING_RATES = [ 1e-2, 1e-3, 1e-4, 1e-5 ]
 DECAY_RATES = [ 1e-2, 1e-3 ]
 INPUT_TYPES = ['norm', 'raw']
 LATENT_SPACES = [ 8, 16, 24 ]
@@ -47,7 +48,10 @@ if gpu_is_available:
 
 
 # configure paths.
-models_path = "../data/models"
+if NORMALIZATION == 'minmax':
+    models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION
+else:
+    models_path = "../data/models/" + "version_" + DATA_VERSION
 run_path = os.path.join(models_path, "run_{run_combination_str}")
 epoch_model_path = os.path.join(run_path, "epoch-{epoch}_corr-{corr:.3f}_loss-{loss:.3f}.pth")
 training_summary_path = os.path.join(run_path, "training-summary.csv")
@@ -285,5 +289,5 @@ for inp_type in INPUT_TYPES:
 			output_activation = OUTPUT_LAYER,     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
-			num_epochs = 50
+			num_epochs = 30
 		)
