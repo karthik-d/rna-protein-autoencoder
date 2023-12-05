@@ -6,8 +6,6 @@ import os
 
 from nn.simple_autoencoder import AutoEncoder
 from data.covid_dataset import CovidDataset
-from utils.metrics import compute_colwise_correlations, compute_colwise_spearman_correlations
-from utils.plots import save_line_plots
 
 
 # SET WEIGHT FILE ------------------
@@ -16,7 +14,7 @@ WEIGHTFILE_PATHS = [
 ]
 NORMALIZATION_METHOD = 'minmax'
 OUTPUT_ACTIVATION = 'sigmoid'
-BATCH_SIZE = 1
+BATCH_SIZE = 256
 # ----------------------------------
 
 
