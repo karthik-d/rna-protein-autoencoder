@@ -10,16 +10,16 @@ from data.covid_dataset import CovidDataset
 
 # SET WEIGHT FILE ------------------
 WEIGHTFILE_PATHS = [
-	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-6_corr-nan_loss-0.061.pth"
-	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
-	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
-	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
+#	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-6_corr-nan_loss-0.061.pth"
+	 "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
+	 "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
+	 "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
 
 ]
 NORMALIZATION_METHOD = 'minmax'
 OUTPUT_ACTIVATION = 'sigmoid'
 BATCH_SIZE = 256
-VERSION = 'two'
+VERSION = 'three'
 # ----------------------------------
 
 
@@ -48,13 +48,13 @@ pathlib.Path(output_root).mkdir(
 # get data loaders.
 def get_data_loaders(version, batch_size, input_type, normalization_method, verbose=True):
 
-	# _  = CovidDataset(
-	# 	version=version, 
-	# 	split='train', 
-	# 	input_type=input_type, 
-	# 	normalization_method=normalization_method,
-	# 	batch_size=batch_size
-	# )
+	_  = CovidDataset(
+		version=version, 
+		split='train', 
+		input_type=input_type, 
+		normalization_method=normalization_method,
+		batch_size=batch_size
+	)
 
 	test_dataset = CovidDataset(
 		version=version, 
@@ -111,7 +111,7 @@ def extraction_job(
 
 	
 	# load model; set grad to false.
-	torch.load(weight_path)
+	torch.load(weight_path, map_location=torch.device('cpu'))
 	model.train(mode=False)
 
 	
