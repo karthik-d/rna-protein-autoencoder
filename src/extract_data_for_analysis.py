@@ -134,7 +134,6 @@ def extraction_job(
 		valid_labels_batchwise.append(pd.DataFrame(valid_labels[:len(valid_rows), :], columns=valid_y_cols, index=valid_rows))
 		valid_predictions_batchwise.append(pd.DataFrame(valid_outputs[:len(valid_rows), :], columns=valid_y_cols, index=valid_rows))
 		valid_latentspace_batchwise.append(pd.DataFrame(valid_latent_repr[:len(valid_rows), :], index=valid_rows))
-		print(valid_predictions_batchwise[-1].shape)
 
 	# CUDA cleanup.
 	if torch.cuda.is_available():
