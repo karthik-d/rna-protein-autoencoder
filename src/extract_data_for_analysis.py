@@ -10,14 +10,16 @@ from data.covid_dataset import CovidDataset
 
 # SET WEIGHT FILE ------------------
 WEIGHTFILE_PATHS = [
-	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
-	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
-	"../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
+	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-6_corr-nan_loss-0.061.pth"
+	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
+	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
+	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
 
 ]
 NORMALIZATION_METHOD = 'minmax'
 OUTPUT_ACTIVATION = 'sigmoid'
 BATCH_SIZE = 256
+VERSION = 'two'
 # ----------------------------------
 
 
@@ -44,25 +46,25 @@ pathlib.Path(output_root).mkdir(
 
 
 # get data loaders.
-def get_data_loaders(batch_size, input_type, normalization_method, verbose=True):
+def get_data_loaders(version, batch_size, input_type, normalization_method, verbose=True):
 
-	_  = CovidDataset(
-		version='three', 
-		split='train', 
-		input_type=input_type, 
-		normalization_method=normalization_method,
-		batch_size=batch_size
-	)
+	# _  = CovidDataset(
+	# 	version=version, 
+	# 	split='train', 
+	# 	input_type=input_type, 
+	# 	normalization_method=normalization_method,
+	# 	batch_size=batch_size
+	# )
 
 	test_dataset = CovidDataset(
-		version='three', 
+		version=version, 
 		split='test', 
 		input_type=input_type, 
 		normalization_method=normalization_method,
 		batch_size=batch_size
 	)
 	valid_dataset = CovidDataset(
-		version='three', 
+		version=version, 
 		split='valid', 
 		input_type=input_type, 
 		normalization_method=normalization_method,
@@ -129,9 +131,9 @@ def extraction_job(
 			valid_outputs, valid_latent_repr = model(valid_inputs)
 
 		valid_x_cols, valid_y_cols, valid_rows = valid_dataset.get_curr_batch_metadata()
-		valid_labels_batchwise.append(pd.DataFrame(valid_labels, columns=valid_y_cols, index=valid_rows))
-		valid_predictions_batchwise.append(pd.DataFrame(valid_outputs, columns=valid_y_cols, index=valid_rows))
-		valid_latentspace_batchwise.append(pd.DataFrame(valid_latent_repr, index=valid_rows))
+		valid_labels_batchwise.append(pd.DataFrame(valid_labels[:len(valid_rows), :], columns=valid_y_cols, index=valid_rows))
+		valid_predictions_batchwise.append(pd.DataFrame(valid_outputs[:len(valid_rows), :], columns=valid_y_cols, index=valid_rows))
+		valid_latentspace_batchwise.append(pd.DataFrame(valid_latent_repr[:len(valid_rows), :], index=valid_rows))
 
 	# CUDA cleanup.
 	if torch.cuda.is_available():
@@ -169,9 +171,9 @@ def extraction_job(
 			test_outputs, test_latent_repr = model(test_inputs)
 
 		test_x_cols, test_y_cols, test_rows = test_dataset.get_curr_batch_metadata()
-		test_labels_batchwise.append(pd.DataFrame(test_labels, columns=test_y_cols, index=test_rows))
-		test_predictions_batchwise.append(pd.DataFrame(test_outputs, columns=test_y_cols, index=test_rows))
-		test_latentspace_batchwise.append(pd.DataFrame(test_latent_repr, index=test_rows))
+		test_labels_batchwise.append(pd.DataFrame(test_labels[:len(test_rows), :], columns=test_y_cols, index=test_rows))
+		test_predictions_batchwise.append(pd.DataFrame(test_outputs[:len(test_rows), :], columns=test_y_cols, index=test_rows))
+		test_latentspace_batchwise.append(pd.DataFrame(test_latent_repr[:len(test_rows), :], index=test_rows))
 
 	# CUDA cleanup.
 	if torch.cuda.is_available():
@@ -206,6 +208,7 @@ for weight_path in WEIGHTFILE_PATHS:
 
 	# get loaders.
 	test_loader, valid_loader, test_dataset, valid_dataset = get_data_loaders(
+		version = VERSION,
 		batch_size = BATCH_SIZE,
 		input_type = inp_type,
 		normalization_method = NORMALIZATION_METHOD
