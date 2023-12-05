@@ -11,6 +11,9 @@ from utils.metrics import compute_colwise_correlations, compute_colwise_spearman
 from utils.plots import save_line_plots
 
 
+# Specify data version
+DATA_VERSION='three'
+
 # PARAM SWEEP ---------------------
 LEARNING_RATES = [ 1e-1, 1e-2, 1e-3, 1e-4, 1e-5 ]
 DECAY_RATES = [ 1e-2, 1e-3 ]
@@ -55,8 +58,8 @@ def get_data_loaders(batch_size, input_type, normalization_method):
 	
 	# TODO: use `input_type` to determine the data input type -- norm and raw.
 
-	train_dataset = CovidDataset(version='two', split='train', input_type=input_type, normalization_method=normalization_method)
-	valid_dataset = CovidDataset(version='two', split='valid', input_type=input_type, normalization_method=normalization_method)
+	train_dataset = CovidDataset(version=DATA_VERSION, split='train', input_type=input_type, normalization_method=normalization_method)
+	valid_dataset = CovidDataset(version=DATA_VERSION, split='valid', input_type=input_type, normalization_method=normalization_method)
 	# wrap dataset into dataloader.
 	return torch.utils.data.DataLoader(
 		train_dataset,
