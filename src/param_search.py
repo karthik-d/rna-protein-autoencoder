@@ -53,7 +53,7 @@ if gpu_is_available:
 
 # configure paths.
 if NORMALIZATION == 'minmax':
-    models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION + '_100EPOCH' 
+    models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION + '_' + NUM_EPOCHS 
 else:
     models_path = "../data/models/" + "version_" + DATA_VERSION
 run_path = os.path.join(models_path, "run_{run_combination_str}")
