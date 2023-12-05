@@ -16,20 +16,24 @@ print()
 print('--- Run Specification ---')
 
 DATA_VERSION='three'
-NORMALIZATION=None     # None, 'minmax'
+NORMALIZATION='minmax'     # None, 'minmax'
 OUTPUT_LAYER='sigmoid'  # 'linear', 'sigmoid'
 BATCH_SIZE=256
+NUM_EPOCHS=100
 
 print("DATA_VERSION:", DATA_VERSION)
 print("NORMALIZATION:", NORMALIZATION)
 print("OUTPUT_LAYER:", OUTPUT_LAYER)
+print("NUM_EPOCHS:", NUM_EPOCHS)
 print()
 
 
 
 # PARAM SWEEP ---------------------
-LEARNING_RATES = [ 1e-2, 1e-3, 1e-4, 1e-5 ]
-DECAY_RATES = [ 1e-2, 1e-3 ]
+# LEARNING_RATES = [ 1e-2, 1e-3, 1e-4, 1e-5 ]
+LEARNING_RATES = [ 1e-5 ]
+# DECAY_RATES = [ 1e-2, 1e-3 ]
+DECAY_RATES = [ 1e-3 ]
 INPUT_TYPES = ['norm', 'raw']
 LATENT_SPACES = [ 8, 16, 24 ]
 # ---------------------------------
@@ -49,7 +53,7 @@ if gpu_is_available:
 
 # configure paths.
 if NORMALIZATION == 'minmax':
-    models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION
+    models_path = "../data/models/" + "version_" + DATA_VERSION + "_" + NORMALIZATION + '_100EPOCH' 
 else:
     models_path = "../data/models/" + "version_" + DATA_VERSION
 run_path = os.path.join(models_path, "run_{run_combination_str}")
@@ -289,5 +293,5 @@ for inp_type in INPUT_TYPES:
 			output_activation = OUTPUT_LAYER,     # can be: ['linear', 'sigmoid']
 			train_loader = train_loader,
 			valid_loader = valid_loader,
-			num_epochs = 30
+			num_epochs = NUM_EPOCHS 
 		)
