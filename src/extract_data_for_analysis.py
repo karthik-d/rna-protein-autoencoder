@@ -48,13 +48,13 @@ pathlib.Path(output_root).mkdir(
 # get data loaders.
 def get_data_loaders(version, batch_size, input_type, normalization_method, verbose=True):
 
-	# _  = CovidDataset(
-	# 	version=version, 
-	# 	split='train', 
-	# 	input_type=input_type, 
-	# 	normalization_method=normalization_method,
-	# 	batch_size=batch_size
-	# )
+	_  = CovidDataset(
+		version=version, 
+		split='train', 
+		input_type=input_type, 
+		normalization_method=normalization_method,
+		batch_size=batch_size
+	)
 
 	test_dataset = CovidDataset(
 		version=version, 
@@ -70,6 +70,7 @@ def get_data_loaders(version, batch_size, input_type, normalization_method, verb
 		normalization_method=normalization_method,
 		batch_size=batch_size
 	)
+	
 	# set verbosity
 	test_dataset.set_verbose_render(state=verbose)
 	valid_dataset.set_verbose_render(state=verbose)
@@ -109,9 +110,8 @@ def extraction_job(
 		output_activation=output_activation
 	).to(device)
 
-	
 	# load model; set grad to false.
-	torch.load(weight_path)
+	model.load_state_dict(torch.load(weight_path, map_location=torch.device('cpu')))
 	model.train(mode=False)
 
 	
