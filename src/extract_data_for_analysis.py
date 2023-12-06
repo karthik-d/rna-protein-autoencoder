@@ -10,16 +10,16 @@ from data.covid_dataset import CovidDataset
 
 # SET WEIGHT FILE ------------------
 WEIGHTFILE_PATHS = [
-	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-6_corr-nan_loss-0.061.pth"
-	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
-	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
-	# "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
+#	"../data/models/run_run_lr-1.00e-01_dr-1.00e-02_ls-8_inp-norm/epoch-6_corr-nan_loss-0.061.pth"
+	 "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-8_inp-norm/epoch-14_corr-0.400_loss-0.004.pth",
+	 "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-16_inp-norm/epoch-14_corr-0.387_loss-0.005.pth",
+	 "../data/models/version_three_minmax/run_run_lr-1.00e-04_dr-1.00e-03_ls-24_inp-norm/epoch-11_corr-0.401_loss-0.004.pth"
 
 ]
 NORMALIZATION_METHOD = 'minmax'
 OUTPUT_ACTIVATION = 'sigmoid'
 BATCH_SIZE = 256
-VERSION = 'two'
+VERSION = 'three'
 # ----------------------------------
 
 
