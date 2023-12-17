@@ -30,10 +30,8 @@ print()
 
 
 # PARAM SWEEP ---------------------
-# LEARNING_RATES = [ 1e-2, 1e-3, 1e-4, 1e-5 ]
-LEARNING_RATES = [ 1e-5 ]
-# DECAY_RATES = [ 1e-2, 1e-3 ]
-DECAY_RATES = [ 1e-3 ]
+LEARNING_RATES = [ 1e-2, 1e-3, 1e-4, 1e-5 ] # LEARNING_RATES = [ 1e-5 ]
+DECAY_RATES = [ 1e-2, 1e-3 ]                # DECAY_RATES = [ 1e-3 ]
 INPUT_TYPES = ['norm', 'raw']
 LATENT_SPACES = [ 8, 16, 24 ]
 # ---------------------------------
