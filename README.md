@@ -1,4 +1,4 @@
-# protein-rna-mapper
+# RNA-Protein AutoEncoder
 
 ## Quick links.
 
