@@ -1,11 +1,15 @@
 # RNA-Protein AutoEncoder
 
+Cell surface proteins and messenger RNA (mRNA) expression are coupled via a highly complex co-regulatory network which is nearly intractable analytically. Cellular indexing of transcriptomes and epitopes by sequencing (CITE-seq) enables high-throughput profiling of both the mRNA and surface proteins expression in single cells, giving new possibilities to study mRNA-protein linkage at finer granularity. 
+
+In this project, we investigated the connection between the paired mRNA and surface protein modalities in CITE-seq data via a simple AutoEncoder neural network architecture. We formulate this problem as a regression task where single-cell mRNA expression is taken as input to predict surface protein expression level. In all, the AutoEncoder model achieves elementary level of prediction performance in linking paired mRNA and surface proteins profiles with **0.4 pearson correlation** agreement between the predicted and measured protein expression levels; the architecture has the potential to be extended for better prediction accuracy and can be used to study the complex regulation of protein expression.
+
 ## Quick links.
 
-- [Dataset [Dropbox]](https://www.dropbox.com/scl/fo/fs29ctkjojo3dd1ntagpa/h?rlkey=nebpsackstvacdw052r4nj9nx&dl=0).
 - [Project Summary Report [PDF]](https://drive.google.com/file/d/1pNfT5tZM-2ehQ_AEAg_oz5HVWs1J4Gv2/view?usp=share_link).
-- [Working Notes [GDocs]](https://docs.google.com/document/d/1-XD7inw_0Rk44fflm1NWWiquGqu5W8euWLPiNNtIWKU/edit?usp=sharing).
+- [Dataset [GDrive]](https://drive.google.com/drive/folders/1AaiGZqVAYeP0E7g6Bw766hrOaH7xFV1z?usp=share_link).
 - [Shared Storage [GDrive]](https://drive.google.com/drive/folders/1Wq5CrreWzERfZCW07whHYdMR8-1UjeLq?usp=share_link).
+- [Working Notes [GDocs]](https://docs.google.com/document/d/1-XD7inw_0Rk44fflm1NWWiquGqu5W8euWLPiNNtIWKU/edit?usp=sharing).
 
 ## Steps to run parameter search.
 
